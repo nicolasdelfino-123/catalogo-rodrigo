@@ -412,6 +412,9 @@ const clearPricingInputs = (state) => ({
 export default function AdminProducts() {
     const [products, setProducts] = useState([])
     const categories = PERFUME_CATEGORY_NAMES
+    const defaultCategory = PERFUME_CATEGORY_DEFINITIONS[0]
+    const defaultCategoryId = defaultCategory?.id || 1
+    const defaultCategoryName = defaultCategory?.name || "Sin categoría"
     const [form, setForm] = useState(null)
     const [q, setQ] = useState("")
     const [selectedCategory, setSelectedCategory] = useState("Todos")
@@ -1385,7 +1388,8 @@ export default function AdminProducts() {
                 />
                 <button
                     onClick={() => setForm({
-                        category_id: 1,
+                        category_id: defaultCategoryId,
+                        category_name: defaultCategoryName,
                         is_active: true,
 
                         image_url: "",
@@ -1459,7 +1463,7 @@ export default function AdminProducts() {
                                         stock: it.stock || 0,
                                         image_url: it.image_url || "",
                                         category_id: catId,
-                                        category_name: ID_TO_CATEGORY_NAME[catId] || "Masculinos",
+                                        category_name: ID_TO_CATEGORY_NAME[catId] || defaultCategoryName,
                                         flavor_enabled: catalog.length > 0,
                                         flavor_catalog: catalog, // ✅ catálogo completo para edición
                                         flavors: catalog.map((x) => x.name), // ✅ todos los sabores como activos por defecto
@@ -2537,7 +2541,7 @@ export default function AdminProducts() {
                                 setForm({
                                     ...form,
                                     category_id: categoryId,
-                                    category_name: ID_TO_CATEGORY_NAME[categoryId] || "Masculinos",
+                                    category_name: ID_TO_CATEGORY_NAME[categoryId] || defaultCategoryName,
                                     flavor_enabled: show,
                                     flavors: show ? form.flavors || [] : [],
                                 })
@@ -2793,8 +2797,6 @@ export default function AdminProducts() {
                                                 flavor_stock_mode: false,
                                             }
 
-                                            // tu API usa category_id; no necesita category_name
-                                            delete body.category_name
                                             const res = await fetch(`${API}/admin/products`, {
                                                 method: "POST",
                                                 headers: {

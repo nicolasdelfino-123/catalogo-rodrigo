@@ -109,9 +109,11 @@ def _serialize_admin_order(order):
         ),
     }
 
-def _ensure_category_exists(category_id: int):
+def _ensure_category_exists(category_id: int, category_name: str | None = None):
     category_id = int(category_id)
-    if category_id not in CATEGORY_ID_TO_NAME:
+    clean_category_name = str(category_name or "").strip()
+
+    if category_id not in CATEGORY_ID_TO_NAME and not clean_category_name:
         category_id = DEFAULT_CATEGORY_ID
 
     category = Category.query.get(category_id)
@@ -119,7 +121,7 @@ def _ensure_category_exists(category_id: int):
         return category
 
     # Si no existe el ID exacto, lo creamos con nombre estable para evitar FK errors.
-    name = CATEGORY_ID_TO_NAME.get(category_id, CATEGORY_ID_TO_NAME[DEFAULT_CATEGORY_ID])
+    name = clean_category_name or CATEGORY_ID_TO_NAME.get(category_id, CATEGORY_ID_TO_NAME[DEFAULT_CATEGORY_ID])
     by_name = Category.query.filter_by(name=name).first()
     if by_name:
         return by_name
@@ -274,7 +276,7 @@ def create_product():
             except Exception:
                 computed_stock = 0
 
-        safe_category = _ensure_category_exists(int(data['category_id']))
+        safe_category = _ensure_category_exists(int(data['category_id']), data.get('category_name'))
 
         product = Product(
             name=data['name'],
@@ -341,7 +343,7 @@ def update_product(product_id):
 
         if 'category_id' in data:
             next_category_id = int(data['category_id'])
-            safe_category = _ensure_category_exists(next_category_id)
+            safe_category = _ensure_category_exists(next_category_id, data.get('category_name'))
             product.category_id = safe_category.id
         if 'is_active' in data:
             product.is_active = bool(data['is_active'])

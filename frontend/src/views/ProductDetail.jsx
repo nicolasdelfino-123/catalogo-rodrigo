@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { formatPrice } from "../utils/price.js";
 import { Context } from '../js/store/appContext.jsx';
 import sinImagen from '@/assets/sin_imagen.jpg'
-import { getDisplayCategoryName, NAME_TO_SLUG } from "../utils/perfumeCategories.js";
+import { getCategorySlugFromName, getDisplayCategoryName } from "../utils/perfumeCategories.js";
 
 
 // --- helpers de sabores ---
@@ -209,7 +209,7 @@ const ProductDetail = () => {
 
         // fallback con categoría del producto
         if (product?.category_name && typeof product.category_name === 'string') {
-            const slug = NAME_TO_SLUG[product.category_name.trim()];
+            const slug = getCategorySlugFromName(product.category_name);
             if (slug) {
                 navigate(`${prefix}/categoria/${slug}`);
                 return;
@@ -222,9 +222,10 @@ const ProductDetail = () => {
 
 
     // Destino de "Volver": categoría si existe, sino /products
+    const backCategorySlug = getCategorySlugFromName(product?.category_name);
     const backHref =
-        (product?.category_name && NAME_TO_SLUG[product.category_name.trim()])
-            ? `/categoria/${NAME_TO_SLUG[product.category_name.trim()]}`
+        backCategorySlug
+            ? `/categoria/${backCategorySlug}`
             : '/products';
 
     if (!product) {

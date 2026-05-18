@@ -1,9 +1,19 @@
 import React, { useEffect, useRef, useState } from "react";
-import Spinner from "../assets/danna_spinner.gif";
+import { storeConfig } from "../config/storeConfig";
+
+const getPublicMediaUrl = (path = "") => {
+    if (!path) return "";
+    if (/^(https?:)?\/\//.test(path) || path.startsWith("data:") || path.startsWith("/")) {
+        return path;
+    }
+
+    return `/${path}`;
+};
 
 const GlobalSpinner = ({ appReady = false }) => {
     const [visible, setVisible] = useState(true);
     const spinnerImgRef = useRef(null);
+    const spinnerSrc = getPublicMediaUrl(storeConfig.media.globalSpinnerGif);
 
     useEffect(() => {
         if (!appReady) {
@@ -51,7 +61,7 @@ const GlobalSpinner = ({ appReady = false }) => {
 
     return (
         <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white">
-            <img ref={spinnerImgRef} src={Spinner} alt="Loading" className="w-54 h-54" />
+            <img ref={spinnerImgRef} src={spinnerSrc} alt="Loading" className="w-54 h-54" />
         </div>
     );
 };

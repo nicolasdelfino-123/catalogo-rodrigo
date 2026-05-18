@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import sinImagen from "@/assets/sin_imagen.jpg";
 import { formatPrice } from "../../../utils/price.js";
 import { getDisplayCategoryName } from "../../../utils/perfumeCategories.js";
+import { storeConfig } from "../../../config/storeConfig.js";
 
 const API = import.meta.env.VITE_BACKEND_URL?.replace(/\/+$/, "") || "";
 
@@ -168,6 +169,11 @@ export default function ProductCardPerfumes({ product, returnTo, isGrid = true }
         : (retailPrice > 0 ? retailPrice : null);
     const pricePrefix = isWholesale ? "$" : "$";
     const displayCategoryName = getDisplayCategoryName(product);
+    const productCardMeta = storeConfig.catalog?.productCardMeta === "brand" ? "brand" : "category";
+    const displayMetaText =
+        productCardMeta === "brand"
+            ? String(product?.brand || "").trim() || displayCategoryName
+            : displayCategoryName;
 
     const stock = Number(selectedSize?.stock ?? product?.stock ?? 0);
     const hasStock = stock > 0;
@@ -269,9 +275,9 @@ export default function ProductCardPerfumes({ product, returnTo, isGrid = true }
                     {product.name}
                 </h3>
 
-                {/* Categoría */}
+                {/* Meta configurable: categoría o marca */}
                 <p className="text-[10px] sm:text-xs text-stone-400 uppercase tracking-widest mt-1 text-center">
-                    {displayCategoryName}
+                    {displayMetaText}
                 </p>
 
                 {/* Precio */}

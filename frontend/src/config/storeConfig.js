@@ -4,8 +4,8 @@ export const storeConfig = {
     features: {
         showHeaderContact: true,
         showBrandCarousel: true,
-        headerTheme: "white", // "black" | "white"
-        footerTheme: "white", // "black" | "white"
+        headerTheme: "black", // "black" | "white"
+        footerTheme: "black", // "black" | "white"
     },
 
     appearance: {
@@ -27,6 +27,22 @@ export const storeConfig = {
         heroTitle: "Fragancias Árabes Exclusivas",
         heroSubtitle: "Aromas intensos · Calidad premium · Precios accesibles",
         /*       footerText: "Perfumes árabes originales en Argentina.", */
+    },
+
+    catalog: {
+        // Cambia el texto chico de las cards del listado: "category" muestra la categoría y "brand" muestra la marca del producto.
+        productCardMeta: "brand", // "category" | "brand"
+
+        // Categorías visibles del catálogo.
+        // El id es el valor real que se guarda/envía a la DB como category_id.
+        // El label es el nombre que se muestra en header, footer, filtros, cards y admin.
+        // El orden de esta lista define el orden visual en los dropdowns y menús.
+        // slug es opcional; si no lo ponés, usa el slug técnico definido en perfumeCategories o lo genera desde el label.
+        categories: [
+            { id: 1, label: "Masculinos" },
+            { id: 2, label: "Femeninos" },
+            { id: 3, label: "Unisex" },
+        ],
     },
 
     footer: {
@@ -53,10 +69,13 @@ export const storeConfig = {
         hours: "Lunes a Sábado 10:30–20:30 - Domingo 11:00–20:00",
     },
 
-    // Estas imagenes se cargan desde frontend/public usando rutas tipo "/archivo".
     media: {
+        // Hero desktop: se carga desde frontend/public. Escribi solo el nombre del archivo o una ruta publica, por ejemplo "f3_si.png".
         heroImageDesktop: "f3_si.png",
+        // Hero mobile: se carga desde frontend/public. Escribi solo el nombre del archivo o una ruta publica, por ejemplo "f3_si.png".
         heroImageMobile: "f3_si.png",
+        // GIF del GlobalSpinner: se carga desde frontend/public. Si queres cambiarlo, pone el GIF en public y actualiza este nombre.
+        globalSpinnerGif: "danna_spinner.gif",
         headerLogo: "logo_attar_prueba.png",
         footerLogo: "logo_danna.jpeg",
     },
