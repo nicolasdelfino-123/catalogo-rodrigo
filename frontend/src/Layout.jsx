@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { BrowserRouter, Route, Routes, useLocation, Navigate } from "react-router-dom";
 import injectContext, { Context } from "./js/store/appContext.jsx";
 import { setWholesaleMode } from "./utils/wholesaleMode.js";
+import { storeConfig } from "./config/storeConfig.js";
 
 //imports nuevos componentes
 import ProductDetailNuevo from "./components/ui/product/ProductDetailNuevo.jsx";
@@ -86,6 +87,7 @@ const ConditionalFloatingButtons = () => {
 const Layout = () => {
   const { store, actions } = useContext(Context);
   const [loading, setLoading] = useState(true);
+  const couponEnabled = storeConfig.features?.coupon === true;
 
   // ===============================
   // Inicialización global app
@@ -179,7 +181,10 @@ const Layout = () => {
 
           {/* Admin */}
           <Route path="/admin/products" element={<AdminProducts />} />
-          <Route path="/admin/coupons" element={<AdminCoupons />} />
+          <Route
+            path="/admin/coupons"
+            element={couponEnabled ? <AdminCoupons /> : <Navigate to="/admin/products" replace />}
+          />
           <Route path="/admin/login" element={<LoginAdmin />} />
           <Route path="/admin/pedidos" element={<AdminPedidos />} />
 

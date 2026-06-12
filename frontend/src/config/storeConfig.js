@@ -4,6 +4,7 @@ export const storeConfig = {
     features: {
         showHeaderContact: true,
         showBrandCarousel: true,
+        coupon: true,
         headerTheme: "black", // "black" | "white"
         footerTheme: "black", // "black" | "white"
     },

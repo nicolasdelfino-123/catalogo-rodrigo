@@ -96,6 +96,7 @@ export default function Cart({ isOpen: controlledOpen, onClose: controlledOnClos
   const isWholesale = location.pathname.startsWith("/mayorista");
   const pricePrefix = isWholesale ? "$" : "$";
   const whatsappPhone = storeConfig.contact.whatsapp;
+  const couponEnabled = storeConfig.features?.coupon === true;
 
 
   const isRouteMode = controlledOpen === undefined && controlledOnClose === undefined;
@@ -138,7 +139,7 @@ export default function Cart({ isOpen: controlledOpen, onClose: controlledOnClos
     return sum + price * (Number(item.quantity) || 0);
   }, 0);
 
-  const couponTotals = appliedCoupon
+  const couponTotals = couponEnabled && appliedCoupon
     ? (() => {
       const subtotal = Math.round(total);
       const percent = Number(appliedCoupon.percent) || 0;
@@ -156,6 +157,8 @@ export default function Cart({ isOpen: controlledOpen, onClose: controlledOnClos
   const finalTotal = couponTotals ? couponTotals.total : Math.round(total);
 
   const applyCoupon = async () => {
+    if (!couponEnabled) return;
+
     const code = normalizeCouponCode(couponCode);
 
     if (!code) {
@@ -253,7 +256,7 @@ export default function Cart({ isOpen: controlledOpen, onClose: controlledOnClos
 
     if (hasUnknownPrice) {
       message += "*TOTAL:* Consultar\n\n";
-    } else if (couponTotals) {
+    } else if (couponEnabled && couponTotals) {
       message += `*Subtotal original:* ~${pricePrefix}${Math.round(total).toLocaleString("es-AR")}~\n`;
       message += `*Cupón ${couponTotals.code} (${couponTotals.percent}% OFF):* -${pricePrefix}${couponTotals.discount.toLocaleString("es-AR")}\n`;
       message += `*TOTAL CON DESCUENTO:* ${pricePrefix}${couponTotals.total.toLocaleString("es-AR")}\n\n`;
@@ -315,7 +318,7 @@ Nombre: ${customerData.name}
 Teléfono: ${customerData.phone}
 Localidad / Zona: ${customerData.zone}
 Pago: ${customerData.payment}
-${couponTotals ? `Cupón aplicado: ${couponTotals.code} (${couponTotals.percent}% OFF)` : ""}
+${couponEnabled && couponTotals ? `Cupón aplicado: ${couponTotals.code} (${couponTotals.percent}% OFF)` : ""}
 
 `;
 
@@ -371,8 +374,8 @@ ${couponTotals ? `Cupón aplicado: ${couponTotals.code} (${couponTotals.percent}
         payment_method: customerData.payment,
         order_items: orderItems,
         total_amount: finalTotal,
-        coupon_code: couponTotals?.code || null,
-        billing_address: couponTotals ? { coupon: couponTotals } : {},
+        coupon_code: couponEnabled ? couponTotals?.code || null : null,
+        billing_address: couponEnabled && couponTotals ? { coupon: couponTotals } : {},
         status: "pendiente"
       })
     });
@@ -570,7 +573,7 @@ ${couponTotals ? `Cupón aplicado: ${couponTotals.code} (${couponTotals.percent}
           </span>
         </div>
 
-        {store.cart && store.cart.length > 0 && (
+        {couponEnabled && store.cart && store.cart.length > 0 && (
           <CuponBox
             code={couponCode}
             onCodeChange={(value) => {
@@ -627,7 +630,7 @@ ${couponTotals ? `Cupón aplicado: ${couponTotals.code} (${couponTotals.percent}
           <div className="flex items-center justify-between mb-4">
             <span className="text-xl font-semibold">Total:</span>
             <span className="text-2xl font-semibold text-gray-900 font-serif tracking-wide">
-              {couponTotals && (
+              {couponEnabled && couponTotals && (
                 <span className="block text-sm font-normal text-gray-400 line-through">
                   {pricePrefix}{Math.round(total).toLocaleString("es-AR")}
                 </span>

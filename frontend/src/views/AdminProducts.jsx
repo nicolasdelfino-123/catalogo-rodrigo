@@ -3,6 +3,7 @@ import { createPortal } from "react-dom"
 import sinImagen from '@/assets/sin_imagen.jpg'
 import { Link, useNavigate } from "react-router-dom";
 import { formatPrice } from "../utils/price.js";
+import { storeConfig } from "../config/storeConfig.js";
 import AdminBudgetToolbar from "../components/admin/AdminBudgetToolbar.jsx";
 import AdminBudgetSelectionCell from "../components/admin/AdminBudgetSelectionCell.jsx";
 import AdminBudgetModal from "../components/admin/AdminBudgetModal.jsx";
@@ -414,6 +415,7 @@ const isParentCategoryId = (categoryId) => {
 
 // ----- Componente principal -----
 export default function AdminProducts() {
+    const couponEnabled = storeConfig.features?.coupon === true;
     const [products, setProducts] = useState([])
     const categories = PERFUME_CATEGORY_DEFINITIONS
     const defaultCategory = PERFUME_CATEGORY_DEFINITIONS[0]
@@ -1465,12 +1467,14 @@ export default function AdminProducts() {
                     Ver pedidos
                 </Link>
 
-                <Link
-                    to="/admin/coupons"
-                    className="inline-block w-full bg-gray-800 text-white px-4 py-2 rounded hover:bg-black text-center sm:w-auto"
-                >
-                    Cupones
-                </Link>
+                {couponEnabled && (
+                    <Link
+                        to="/admin/coupons"
+                        className="inline-block w-full bg-gray-800 text-white px-4 py-2 rounded hover:bg-black text-center sm:w-auto"
+                    >
+                        Cupones
+                    </Link>
+                )}
 
 
                 {/* Importar JSON */}

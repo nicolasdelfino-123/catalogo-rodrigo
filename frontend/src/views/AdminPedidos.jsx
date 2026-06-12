@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
 import { formatCouponMoney, getCouponFromOrder } from "../utils/coupons.js";
+import { storeConfig } from "../config/storeConfig.js";
 
 const API = import.meta.env.VITE_BACKEND_URL?.replace(/\/+$/, "") || "";
 
 export default function AdminPedidos() {
+    const couponEnabled = storeConfig.features?.coupon === true;
     const [orders, setOrders] = useState([]);
     const [selected, setSelected] = useState(null); // 🆕 Pedido seleccionado
     const [loadingId, setLoadingId] = useState(null);
@@ -201,7 +203,7 @@ export default function AdminPedidos() {
                 // detectar mayorista: si los precios parecen mayoristas
                 const isWholesale = items.some(i => i.price && i.price < 1000);
                 const currency = isWholesale ? "$" : "$";
-                const coupon = getCouponFromOrder(selected);
+                const coupon = couponEnabled ? getCouponFromOrder(selected) : null;
                 const customerPhone =
                     selected.customer_phone ||
                     selected.shipping_address?.phone ||

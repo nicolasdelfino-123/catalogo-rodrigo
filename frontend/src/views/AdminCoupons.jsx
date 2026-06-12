@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
+import { storeConfig } from "../config/storeConfig.js";
 
 const API = import.meta.env.VITE_BACKEND_URL?.replace(/\/+$/, "") || "";
 
 const normalizeCode = (value = "") => String(value || "").trim().toUpperCase();
 
 export default function AdminCoupons() {
+    const couponEnabled = storeConfig.features?.coupon === true;
     const token = localStorage.getItem("token") || localStorage.getItem("admin_token");
     const [coupons, setCoupons] = useState([]);
     const [form, setForm] = useState({ code: "", percent: "", active: true });
@@ -14,7 +16,7 @@ export default function AdminCoupons() {
     const [message, setMessage] = useState("");
 
     const fetchCoupons = useCallback(async () => {
-        if (!token) return;
+        if (!couponEnabled || !token) return;
         setLoading(true);
         try {
             const res = await fetch(`${API}/admin/coupons`, {
@@ -32,11 +34,15 @@ export default function AdminCoupons() {
         } finally {
             setLoading(false);
         }
-    }, [token]);
+    }, [couponEnabled, token]);
 
     useEffect(() => {
         fetchCoupons();
     }, [fetchCoupons]);
+
+    if (!couponEnabled) {
+        return <Navigate to="/admin/products" replace />;
+    }
 
     const saveCoupon = async (event) => {
         event.preventDefault();
