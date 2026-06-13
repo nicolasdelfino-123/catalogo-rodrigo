@@ -5,6 +5,7 @@ export const storeConfig = {
         showHeaderContact: true,
         showBrandCarousel: true,
         coupon: false,
+        priceAdjustment: false,
         headerTheme: "black", // "black" | "white"
         footerTheme: "black", // "black" | "white"
     },
