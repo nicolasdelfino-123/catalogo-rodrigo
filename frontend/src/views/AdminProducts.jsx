@@ -20,6 +20,7 @@ import {
 import {
     CATEGORY_ID_TO_NAME as ID_TO_CATEGORY_NAME,
     getDisplayCategoryName,
+    getProductCategoryIds,
     mapCategoryIdFromName,
     PERFUME_CATEGORY_DEFINITIONS,
     PERFUME_CATEGORY_TREE,
@@ -422,6 +423,25 @@ const clearPricingInputs = (state) => ({
 const isParentCategoryId = (categoryId) => {
     const category = PERFUME_CATEGORY_DEFINITIONS.find((item) => Number(item.id) === Number(categoryId));
     return Boolean(category?.children?.length);
+};
+
+const getExtraCategoryIds = (product = {}) => {
+    const primaryId = Number(product?.category_id);
+    const rawIds = Array.isArray(product?.extra_category_ids)
+        ? product.extra_category_ids
+        : Array.isArray(product?.category_ids)
+            ? product.category_ids.filter((id) => Number(id) !== primaryId)
+            : [];
+
+    return rawIds
+        .map(Number)
+        .filter((id, index, arr) =>
+            Number.isFinite(id) &&
+            id > 0 &&
+            id !== primaryId &&
+            !isParentCategoryId(id) &&
+            arr.indexOf(id) === index
+        );
 };
 
 // ----- Componente principal -----
@@ -1118,6 +1138,8 @@ export default function AdminProducts() {
             delete cleanForm.image_urls;
             delete cleanForm.volume_stock;
             delete cleanForm.show_on_home;
+            delete cleanForm.multi_category_enabled;
+            delete cleanForm.extra_category_draft;
             const allVolumeOptions = normalizeVolumeOptions(form.volume_options || [], { keepWithoutMl: true });
             const fallbackRetail = Number(
                 allVolumeOptions.find((row) => Number(row?.price) > 0)?.price
@@ -1149,6 +1171,9 @@ export default function AdminProducts() {
                         ? Math.max(0, Math.floor(Number(form.volume_ml)))
                         : null,
                 volume_options: normalizeVolumeOptions(form.volume_options || []),
+                extra_category_ids: form.multi_category_enabled
+                    ? getExtraCategoryIds(form)
+                    : [],
 
 
                 image_url: normalizedImageUrl,
@@ -1371,7 +1396,9 @@ export default function AdminProducts() {
             (selectedCategory === HOME_CATEGORY_FILTER && featuredProductIds.includes(Number(p.id))) ||
             (
                 selectedCategory !== HOME_CATEGORY_FILTER &&
-                normalizeCategoryLabel(getDisplayCategoryName(p)) === normalizeCategoryLabel(selectedCategory)
+                getProductCategoryIds(p).some((categoryId) =>
+                    normalizeCategoryLabel(ID_TO_CATEGORY_NAME[categoryId]) === normalizeCategoryLabel(selectedCategory)
+                )
             );
 
         const isActive = Boolean(p?.is_active);
@@ -1555,6 +1582,9 @@ export default function AdminProducts() {
                     onClick={() => setForm({
                         category_id: defaultCategoryId,
                         category_name: defaultCategoryName,
+                        extra_category_ids: [],
+                        multi_category_enabled: false,
+                        extra_category_draft: "",
                         is_active: true,
 
                         image_url: "",
@@ -1971,7 +2001,14 @@ export default function AdminProducts() {
                                                 </div>
                                             )}
                                         </td>
-                                        <td className="hidden p-2 text-center md:table-cell">{getDisplayCategoryName(p)}</td>
+                                        <td className="hidden p-2 text-center md:table-cell">
+                                            <div>{getDisplayCategoryName(p)}</div>
+                                            {getExtraCategoryIds(p).length > 0 && (
+                                                <div className="mt-1 text-xs text-gray-500">
+                                                    + {getExtraCategoryIds(p).map((id) => ID_TO_CATEGORY_NAME[id] || `Categoría ${id}`).join(", ")}
+                                                </div>
+                                            )}
+                                        </td>
                                         <td className="p-2 text-center">
                                             <input
                                                 type="checkbox"
@@ -2130,6 +2167,9 @@ export default function AdminProducts() {
                                                         setForm({
                                                             ...p,
                                                             category_id: p.category_id,
+                                                            extra_category_ids: getExtraCategoryIds(p),
+                                                            multi_category_enabled: getExtraCategoryIds(p).length > 0,
+                                                            extra_category_draft: "",
                                                             price: "",
                                                             price_wholesale: "",
                                                             volume_ml: "",
@@ -2792,37 +2832,143 @@ export default function AdminProducts() {
                                 </div>
                             </div>
                         )}
+                        <label className="flex items-center gap-2 rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+                            <input
+                                type="checkbox"
+                                checked={Boolean(form.multi_category_enabled)}
+                                onChange={(e) =>
+                                    setForm((prev) => ({
+                                        ...prev,
+                                        multi_category_enabled: e.target.checked,
+                                        extra_category_ids: e.target.checked ? (prev.extra_category_ids || []) : [],
+                                        extra_category_draft: "",
+                                    }))
+                                }
+                            />
+                            Mandar a dos o más categorías
+                        </label>
 
+                        <div className="space-y-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Categoría
+                            </label>
+                            <div className="flex items-center gap-2">
+                                <select
+                                    className="w-full border rounded px-3 py-2"
+                                    value={form.multi_category_enabled ? (form.extra_category_draft || "") : (form.category_id || "")}
+                                    onChange={(e) => {
+                                        const categoryId = parseInt(e.target.value);
+                                        if (form.multi_category_enabled) {
+                                            setForm((prev) => ({ ...prev, extra_category_draft: e.target.value }));
+                                            return;
+                                        }
 
-
-
-                        <select
-                            className="w-full border rounded px-3 py-2"
-                            value={form.category_id || ""}
-                            onChange={(e) => {
-                                const categoryId = parseInt(e.target.value)
-                                const show = shouldShowFlavors(categoryId)
-                                setForm({
-                                    ...form,
-                                    category_id: categoryId,
-                                    category_name: ID_TO_CATEGORY_NAME[categoryId] || defaultCategoryName,
-                                    flavor_enabled: show,
-                                    flavors: show ? form.flavors || [] : [],
-                                })
-                            }}
-                            required
-                        >
-                            <option value="">Selecciona categoría</option>
-                            {PERFUME_CATEGORY_DEFINITIONS.map((category) => (
-                                <option
-                                    key={category.id}
-                                    value={category.id}
-                                    disabled={category.children?.length > 0}
+                                        const show = shouldShowFlavors(categoryId);
+                                        setForm({
+                                            ...form,
+                                            category_id: categoryId,
+                                            category_name: ID_TO_CATEGORY_NAME[categoryId] || defaultCategoryName,
+                                            extra_category_ids: (form.extra_category_ids || []).filter((id) => Number(id) !== Number(categoryId)),
+                                            flavor_enabled: show,
+                                            flavors: show ? form.flavors || [] : [],
+                                        });
+                                    }}
+                                    required={!form.multi_category_enabled}
                                 >
-                                    {category.level > 0 ? `${category.emoji} ${category.name}` : category.name}
-                                </option>
-                            ))}
-                        </select>
+                                    <option value="">Selecciona categoría</option>
+                                    {PERFUME_CATEGORY_DEFINITIONS.map((category) => {
+                                        const id = Number(category.id);
+                                        const disabled =
+                                            Boolean(category.children?.length) ||
+                                            (
+                                                form.multi_category_enabled &&
+                                                (
+                                                    id === Number(form.category_id) ||
+                                                    (form.extra_category_ids || []).map(Number).includes(id)
+                                                )
+                                            );
+
+                                        return (
+                                            <option key={category.id} value={category.id} disabled={disabled}>
+                                                {category.level > 0 ? `${category.emoji} ${category.name}` : category.name}
+                                            </option>
+                                        );
+                                    })}
+                                </select>
+
+                                {form.multi_category_enabled && (
+                                    <button
+                                        type="button"
+                                        className="h-10 px-3 rounded bg-green-600 text-white hover:bg-green-700 transition-colors disabled:cursor-not-allowed disabled:bg-green-300"
+                                        disabled={!form.extra_category_draft}
+                                        onClick={() => {
+                                            const categoryId = Number(form.extra_category_draft);
+                                            if (!Number.isFinite(categoryId) || categoryId <= 0 || categoryId === Number(form.category_id)) return;
+                                            if (isParentCategoryId(categoryId)) return;
+                                            setForm((prev) => ({
+                                                ...prev,
+                                                extra_category_ids: Array.from(new Set([...(prev.extra_category_ids || []).map(Number), categoryId])),
+                                                extra_category_draft: "",
+                                            }));
+                                        }}
+                                    >
+                                        Agregar
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {form.multi_category_enabled && (
+                            <div className="space-y-2 rounded border p-3">
+                                <div className="flex items-center justify-between rounded border bg-gray-50 px-3 py-2 text-sm">
+                                    <span>{ID_TO_CATEGORY_NAME[form.category_id] || "Categoría principal"}</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                                            Principal
+                                        </span>
+                                        <button
+                                            type="button"
+                                            className="px-2 py-1 border rounded hover:bg-gray-50 text-red-600"
+                                            title="Eliminar principal"
+                                            onClick={() =>
+                                                setForm((prev) => {
+                                                    const [nextPrimary, ...restExtras] = (prev.extra_category_ids || []).map(Number);
+                                                    const nextCategoryId = Number.isFinite(nextPrimary) ? nextPrimary : "";
+                                                    return {
+                                                        ...prev,
+                                                        category_id: nextCategoryId,
+                                                        category_name: nextCategoryId ? ID_TO_CATEGORY_NAME[nextCategoryId] || defaultCategoryName : "",
+                                                        extra_category_ids: restExtras,
+                                                        extra_category_draft: "",
+                                                    };
+                                                })
+                                            }
+                                        >
+                                            🗑️
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {(form.extra_category_ids || []).map((categoryId) => (
+                                    <div key={categoryId} className="flex items-center justify-between rounded border px-3 py-2 text-sm">
+                                        <span>{ID_TO_CATEGORY_NAME[categoryId] || `Categoría ${categoryId}`}</span>
+                                        <button
+                                            type="button"
+                                            className="px-2 py-1 border rounded hover:bg-gray-50 text-red-600"
+                                            title="Eliminar"
+                                            onClick={() =>
+                                                setForm((prev) => ({
+                                                    ...prev,
+                                                    extra_category_ids: (prev.extra_category_ids || []).filter((id) => Number(id) !== Number(categoryId)),
+                                                }))
+                                            }
+                                        >
+                                            🗑️
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
 
                         {/* Sabores solo para 1 y 3 */}
 

@@ -32,6 +32,19 @@ def _is_product_hidden(product):
         for item in (product.flavor_catalog or [])
     )
 
+def _product_category_ids(product):
+    ids = [int(product.category_id)]
+    for item in (product.flavor_catalog or []):
+        if isinstance(item, dict) and item.get("__type") == "multi_category_meta":
+            for raw_id in item.get("extra_category_ids") or []:
+                try:
+                    category_id = int(raw_id)
+                except Exception:
+                    continue
+                if category_id > 0 and category_id not in ids:
+                    ids.append(category_id)
+    return ids
+
 def _get_public_setting(key, default=None):
     row = db.session.execute(
         text(f"SELECT value FROM {ADMIN_SETTINGS_TABLE} WHERE key = :key"),
@@ -69,15 +82,13 @@ def get_products():
         # Query base
         query = Product.query.filter(Product.is_active == True)
         
-        # Filtrar por categoría si se especifica
-        if category_id:
-            query = query.filter(Product.category_id == category_id)
-        
         # Filtrar por búsqueda si se especifica
         if search:
             query = query.filter(Product.name.ilike(f'%{search}%'))
         
         products = [product for product in query.all() if not _is_product_hidden(product)]
+        if category_id:
+            products = [product for product in products if category_id in _product_category_ids(product)]
         return jsonify([product.serialize() for product in products]), 200
         
     except Exception as e:
@@ -120,11 +131,11 @@ def get_products_by_category(category_id):
         if not category:
             return jsonify({'error': 'Categoría no encontrada'}), 404
             
-        products = Product.query.filter(
-            Product.category_id == category_id,
-            Product.is_active == True
-        ).all()
-        products = [product for product in products if not _is_product_hidden(product)]
+        products = Product.query.filter(Product.is_active == True).all()
+        products = [
+            product for product in products
+            if not _is_product_hidden(product) and category_id in _product_category_ids(product)
+        ]
         
         return jsonify({
             'category': category.serialize(),

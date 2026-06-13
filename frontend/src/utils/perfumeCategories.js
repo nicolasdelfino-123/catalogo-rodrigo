@@ -155,6 +155,27 @@ export const getNormalizedCategoryId = (product) => {
     return byName || DEFAULT_CATEGORY_ID;
 };
 
+export const getProductCategoryIds = (product) => {
+    const ids = [];
+    const pushId = (rawId) => {
+        const id = Number(rawId);
+        if (Number.isFinite(id) && id > 0 && CATEGORY_ID_TO_NAME[id] && !ids.includes(id)) {
+            ids.push(id);
+        }
+    };
+
+    pushId(product?.category_id);
+    if (Array.isArray(product?.category_ids)) {
+        product.category_ids.forEach(pushId);
+    }
+    if (Array.isArray(product?.extra_category_ids)) {
+        product.extra_category_ids.forEach(pushId);
+    }
+
+    if (!ids.length) ids.push(getNormalizedCategoryId(product));
+    return ids;
+};
+
 export const getDisplayCategoryName = (product) => {
     const normalizedId = getNormalizedCategoryId(product);
     return CATEGORY_ID_TO_NAME[normalizedId] || CATEGORY_ID_TO_NAME[DEFAULT_CATEGORY_ID];

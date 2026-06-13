@@ -20,6 +20,18 @@ const parsePercent = (value = "") => {
 const normalizeBrandKey = (value = "") =>
     String(value || "").trim().toLowerCase();
 
+const getProductCategoryIds = (product = {}) => {
+    const ids = [];
+    const pushId = (rawId) => {
+        const id = Number(rawId);
+        if (Number.isFinite(id) && id > 0 && !ids.includes(id)) ids.push(id);
+    };
+    pushId(product.category_id);
+    if (Array.isArray(product.category_ids)) product.category_ids.forEach(pushId);
+    if (Array.isArray(product.extra_category_ids)) product.extra_category_ids.forEach(pushId);
+    return ids;
+};
+
 const formatAdjustmentDate = (value) => {
     if (!value) return "Sin fecha";
     const date = new Date(value);
@@ -80,7 +92,9 @@ export default function AdminPriceAdjustmentModal({
     const selectedBrand = brand || defaultBrand;
     const affectedCount = targetType === "brand"
         ? products.filter((product) => normalizeBrandKey(product?.brand) === normalizeBrandKey(selectedBrand)).length
-        : products.filter((product) => selectedCategoryIds.includes(Number(product.category_id))).length;
+        : products.filter((product) =>
+            getProductCategoryIds(product).some((categoryId) => selectedCategoryIds.includes(categoryId))
+        ).length;
     const percent = parsePercent(percentDraft);
     const canApply =
         !pendingAdjustment &&

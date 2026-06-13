@@ -143,6 +143,18 @@ class Product(db.Model):
             stock_val = int(self.stock or 0)
         except Exception:
             stock_val = 0
+        extra_category_ids = []
+        for item in (self.flavor_catalog or []):
+            if isinstance(item, dict) and item.get("__type") == "multi_category_meta":
+                raw_ids = item.get("extra_category_ids") or []
+                for raw_id in raw_ids:
+                    try:
+                        category_id = int(raw_id)
+                    except Exception:
+                        continue
+                    if category_id > 0 and category_id != self.category_id and category_id not in extra_category_ids:
+                        extra_category_ids.append(category_id)
+        category_ids = [self.category_id, *extra_category_ids]
 
         return {
             'id': self.id,
@@ -155,6 +167,8 @@ class Product(db.Model):
             'image_urls': image_urls,             # todas las fotos
             'brand': self.brand,
             'category_id': self.category_id,
+            'category_ids': category_ids,
+            'extra_category_ids': extra_category_ids,
             'category_name': self.category.name if self.category else None,
             'is_active': self.is_active,
             'flavors': self.flavors or [],

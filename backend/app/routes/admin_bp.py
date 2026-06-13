@@ -233,6 +233,52 @@ def _is_product_hidden_from_admin(product):
         for item in (product.flavor_catalog or [])
     )
 
+def _normalize_extra_category_ids(value, primary_category_id=None):
+    if not isinstance(value, list):
+        return []
+    ids = []
+    seen = set()
+    primary = int(primary_category_id) if primary_category_id not in ("", None) else None
+    for raw_id in value:
+        try:
+            category_id = int(raw_id)
+        except Exception:
+            continue
+        if category_id <= 0 or category_id == primary or category_id in seen:
+            continue
+        seen.add(category_id)
+        ids.append(category_id)
+    return ids
+
+def _catalog_with_multi_category_meta(catalog, extra_category_ids=None):
+    rows = [dict(item) if isinstance(item, dict) else item for item in (catalog or [])]
+    extra_ids = _normalize_extra_category_ids(extra_category_ids)
+    meta_found = False
+
+    for item in rows:
+        if isinstance(item, dict) and item.get('__type') == MULTI_CATEGORY_META_TYPE:
+            item["extra_category_ids"] = extra_ids
+            meta_found = True
+            break
+
+    if not meta_found and extra_ids:
+        rows.append({'__type': MULTI_CATEGORY_META_TYPE, "extra_category_ids": extra_ids})
+
+    return rows
+
+def _product_category_ids(product):
+    ids = [int(product.category_id)]
+    for item in (product.flavor_catalog or []):
+        if isinstance(item, dict) and item.get('__type') == MULTI_CATEGORY_META_TYPE:
+            for raw_id in item.get("extra_category_ids") or []:
+                try:
+                    category_id = int(raw_id)
+                except Exception:
+                    continue
+                if category_id > 0 and category_id not in ids:
+                    ids.append(category_id)
+    return ids
+
 def _catalog_with_product_hidden_marker(catalog):
     rows = [dict(item) if isinstance(item, dict) else item for item in (catalog or [])]
     for item in rows:
@@ -308,6 +354,10 @@ def create_product():
                 computed_stock = 0
 
         safe_category = _ensure_category_exists(int(data['category_id']), data.get('category_name'))
+        extra_category_ids = _normalize_extra_category_ids(data.get('extra_category_ids'), safe_category.id)
+        for extra_category_id in extra_category_ids:
+            _ensure_category_exists(extra_category_id)
+        catalog = _catalog_with_multi_category_meta(catalog, extra_category_ids)
 
         product = Product(
             name=data['name'],
@@ -376,6 +426,12 @@ def update_product(product_id):
             next_category_id = int(data['category_id'])
             safe_category = _ensure_category_exists(next_category_id, data.get('category_name'))
             product.category_id = safe_category.id
+        if 'extra_category_ids' in data:
+            extra_category_ids = _normalize_extra_category_ids(data.get('extra_category_ids'), product.category_id)
+            for extra_category_id in extra_category_ids:
+                _ensure_category_exists(extra_category_id)
+            product.flavor_catalog = _catalog_with_multi_category_meta(product.flavor_catalog or [], extra_category_ids)
+            flag_modified(product, "flavor_catalog")
         if 'is_active' in data:
             product.is_active = bool(data['is_active'])
         if 'volume_ml' in data:
@@ -413,6 +469,11 @@ def update_product(product_id):
                 product.flavors = [f['name'] for f in catalog if f.get('active')]
             elif 'flavors' in data:
                 product.flavors = data.get('flavors', []) or []
+
+            if 'extra_category_ids' in data:
+                extra_category_ids = _normalize_extra_category_ids(data.get('extra_category_ids'), product.category_id)
+                product.flavor_catalog = _catalog_with_multi_category_meta(product.flavor_catalog or [], extra_category_ids)
+                flag_modified(product, "flavor_catalog")
 
             # stock total coherente
             if product.flavor_stock_mode:
@@ -647,7 +708,10 @@ def apply_price_adjustment():
 
             if not category_ids:
                 return jsonify({'error': 'Elegí una categoría válida.'}), 400
-            products = Product.query.filter(Product.category_id.in_(category_ids)).all()
+            products = [
+                product for product in Product.query.all()
+                if any(category_id in _product_category_ids(product) for category_id in category_ids)
+            ]
             target_label = str(data.get('category_label') or 'Categoria')
 
         products = [product for product in products if not _is_product_hidden_from_admin(product)]

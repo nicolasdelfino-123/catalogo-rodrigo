@@ -5,7 +5,7 @@ import ProductCardPerfumes from "../components/ui/cards/ProductCardPerfumes.jsx"
 import HomeContact from "../components/home/HomeContact.jsx";
 import Asesoria from "../components/Asesoria.jsx";
 import { storeConfig } from "../config/storeConfig";
-import { getNormalizedCategoryId, mapCategoryIdFromName } from "../utils/perfumeCategories.js";
+import { getProductCategoryIds, mapCategoryIdFromName } from "../utils/perfumeCategories.js";
 import { getApiUrl } from "../utils/apiUrl.js";
 
 import afnan from '../assets/afnan.webp'
@@ -100,8 +100,8 @@ export default function InicioNuevo() {
         const price = Number(product?.price);
         return Number.isFinite(price) ? price : Number.POSITIVE_INFINITY;
     };
-    const isWomenFragrance = (product) => getNormalizedCategoryId(product) === womenCategoryId;
-    const isMenFragrance = (product) => getNormalizedCategoryId(product) === menCategoryId;
+    const isWomenFragrance = (product) => getProductCategoryIds(product).includes(womenCategoryId);
+    const isMenFragrance = (product) => getProductCategoryIds(product).includes(menCategoryId);
 
     const womenFeatured = allProducts
         .filter(isWomenFragrance)
