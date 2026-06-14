@@ -6,6 +6,8 @@ export const storeConfig = {
         showBrandCarousel: true,
         coupon: false,
         priceAdjustment: false,
+        // Activa/desactiva la categoría virtual "Más Vendidos" en header, footer, filtros, admin y modal de productos.
+        bestSellers: true,
         headerTheme: "black", // "black" | "white"
         footerTheme: "black", // "black" | "white"
     },

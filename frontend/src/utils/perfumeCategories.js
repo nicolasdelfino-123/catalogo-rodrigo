@@ -1,6 +1,9 @@
 import { storeConfig } from "../config/storeConfig";
 
 export const DEFAULT_CATEGORY_ID = 1;
+export const BEST_SELLERS_CATEGORY_ID = 999999;
+export const BEST_SELLERS_CATEGORY_NAME = "Más Vendidos";
+export const BEST_SELLERS_CATEGORY_SLUG = "mas-vendidos";
 
 // Contrato técnico de categorías: estos IDs son los que viajan como category_id a la DB.
 // Los labels, el orden y la jerarquía visible se configuran desde storeConfig.catalog.categories.
@@ -46,6 +49,28 @@ const configuredCategories = Array.isArray(storeConfig.catalog?.categories)
     ? storeConfig.catalog.categories
     : [];
 
+const baseCatalogCategories = configuredCategories.length
+    ? configuredCategories
+    : PERFUME_CATEGORY_ID_DEFINITIONS.map((category) => ({
+        id: category.id,
+        label: category.fallbackName,
+        slug: category.slug,
+    }));
+
+const bestSellersCategory = {
+    id: BEST_SELLERS_CATEGORY_ID,
+    label: BEST_SELLERS_CATEGORY_NAME,
+    slug: BEST_SELLERS_CATEGORY_SLUG,
+    emoji: "★",
+};
+
+const catalogCategories = storeConfig.features?.bestSellers === true
+    ? [
+        ...baseCatalogCategories.filter((category) => Number(category?.id) !== BEST_SELLERS_CATEGORY_ID),
+        bestSellersCategory,
+    ]
+    : baseCatalogCategories.filter((category) => Number(category?.id) !== BEST_SELLERS_CATEGORY_ID);
+
 const buildCategoryTree = (categories = [], parentId = null, level = 0) =>
     categories
         .map((category) => {
@@ -81,8 +106,8 @@ const fallbackTree = PERFUME_CATEGORY_ID_DEFINITIONS.map((category) => ({
     fallbackName: category.fallbackName,
 }));
 
-export const PERFUME_CATEGORY_TREE = configuredCategories.length
-    ? buildCategoryTree(configuredCategories)
+export const PERFUME_CATEGORY_TREE = catalogCategories.length
+    ? buildCategoryTree(catalogCategories)
     : fallbackTree;
 
 const flattenCategories = (categories = []) =>

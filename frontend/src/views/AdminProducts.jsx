@@ -19,6 +19,7 @@ import {
 } from "../utils/adminPriceAdjustmentApi.js";
 import {
     CATEGORY_ID_TO_NAME as ID_TO_CATEGORY_NAME,
+    BEST_SELLERS_CATEGORY_ID,
     getDisplayCategoryName,
     getProductCategoryIds,
     mapCategoryIdFromName,
@@ -425,7 +426,7 @@ const isParentCategoryId = (categoryId) => {
     return Boolean(category?.children?.length);
 };
 
-const getExtraCategoryIds = (product = {}) => {
+const getExtraCategoryIds = (product = {}, { includeBestSellers = false } = {}) => {
     const primaryId = Number(product?.category_id);
     const rawIds = Array.isArray(product?.extra_category_ids)
         ? product.extra_category_ids
@@ -439,16 +440,21 @@ const getExtraCategoryIds = (product = {}) => {
             Number.isFinite(id) &&
             id > 0 &&
             id !== primaryId &&
+            (includeBestSellers || id !== BEST_SELLERS_CATEGORY_ID) &&
             !isParentCategoryId(id) &&
             arr.indexOf(id) === index
         );
 };
+
+const isBestSellerProduct = (product = {}) =>
+    getProductCategoryIds(product).includes(BEST_SELLERS_CATEGORY_ID);
 
 // ----- Componente principal -----
 export default function AdminProducts() {
     const currencySymbol = getCurrencySymbol();
     const couponEnabled = storeConfig.features?.coupon === true;
     const priceAdjustmentEnabled = storeConfig.features?.priceAdjustment === true;
+    const bestSellersEnabled = storeConfig.features?.bestSellers === true;
     const [products, setProducts] = useState([])
     const categories = PERFUME_CATEGORY_DEFINITIONS
     const defaultCategory = PERFUME_CATEGORY_DEFINITIONS[0]
@@ -487,6 +493,7 @@ export default function AdminProducts() {
     const [uploadingImageLabel, setUploadingImageLabel] = useState("");
     const [savingProduct, setSavingProduct] = useState(false);
     const [savingFeaturedId, setSavingFeaturedId] = useState(null);
+    const [savingBestSellerId, setSavingBestSellerId] = useState(null);
     const [featuredProductIds, setFeaturedProductIds] = useState([]);
     const [hidingProductId, setHidingProductId] = useState(null);
     const [productToHide, setProductToHide] = useState(null);
@@ -715,6 +722,53 @@ export default function AdminProducts() {
             alert(error?.message || "No se pudo actualizar la selección de Inicio.");
         } finally {
             setSavingFeaturedId(null);
+        }
+    };
+
+    const toggleBestSellerProduct = async (product, checked) => {
+        if (!bestSellersEnabled || !product?.id) return;
+
+        const productId = Number(product.id);
+        const prevProduct = product;
+        const currentExtraIds = getExtraCategoryIds(product, { includeBestSellers: true });
+        const currentSelected = currentExtraIds.includes(BEST_SELLERS_CATEGORY_ID);
+        if (currentSelected === checked) return;
+
+        const nextExtraIds = checked
+            ? Array.from(new Set([...currentExtraIds, BEST_SELLERS_CATEGORY_ID]))
+            : currentExtraIds.filter((id) => Number(id) !== BEST_SELLERS_CATEGORY_ID);
+
+        const nextProduct = {
+            ...product,
+            extra_category_ids: nextExtraIds,
+            category_ids: [Number(product.category_id), ...nextExtraIds],
+        };
+
+        setProducts((prev) => prev.map((item) => (Number(item.id) === productId ? nextProduct : item)));
+        setSavingBestSellerId(productId);
+
+        try {
+            const res = await fetch(`${API}/admin/products/${productId}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ extra_category_ids: nextExtraIds }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                throw new Error(data?.error || res.statusText || "No se pudo guardar Más Vendidos");
+            }
+            if (data?.product) {
+                setProducts((prev) => prev.map((item) => (Number(item.id) === productId ? data.product : item)));
+            }
+        } catch (error) {
+            console.error("Error saving best seller product:", error);
+            setProducts((prev) => prev.map((item) => (Number(item.id) === productId ? prevProduct : item)));
+            alert(error?.message || "No se pudo actualizar Más Vendidos.");
+        } finally {
+            setSavingBestSellerId(null);
         }
     };
 
@@ -1139,8 +1193,15 @@ export default function AdminProducts() {
             delete cleanForm.image_urls;
             delete cleanForm.volume_stock;
             delete cleanForm.show_on_home;
+            delete cleanForm.show_in_best_sellers;
             delete cleanForm.multi_category_enabled;
             delete cleanForm.extra_category_draft;
+            const manualExtraCategoryIds = form.multi_category_enabled
+                ? getExtraCategoryIds(form)
+                : [];
+            const finalExtraCategoryIds = bestSellersEnabled && form.show_in_best_sellers
+                ? Array.from(new Set([...manualExtraCategoryIds, BEST_SELLERS_CATEGORY_ID]))
+                : manualExtraCategoryIds;
             const allVolumeOptions = normalizeVolumeOptions(form.volume_options || [], { keepWithoutMl: true });
             const fallbackRetail = Number(
                 allVolumeOptions.find((row) => Number(row?.price) > 0)?.price
@@ -1172,9 +1233,7 @@ export default function AdminProducts() {
                         ? Math.max(0, Math.floor(Number(form.volume_ml)))
                         : null,
                 volume_options: normalizeVolumeOptions(form.volume_options || []),
-                extra_category_ids: form.multi_category_enabled
-                    ? getExtraCategoryIds(form)
-                    : [],
+                extra_category_ids: finalExtraCategoryIds,
 
 
                 image_url: normalizedImageUrl,
@@ -1598,6 +1657,7 @@ export default function AdminProducts() {
                         volume_options: [],
                         stock: 0,
                         show_on_home: false,
+                        show_in_best_sellers: false,
                     })}
 
 
@@ -1674,6 +1734,7 @@ export default function AdminProducts() {
                                         flavors: catalog.map((x) => x.name), // ✅ todos los sabores como activos por defecto
                                         flavor_stock_mode: false, // por defecto
                                         is_active: true,
+                                        show_in_best_sellers: false,
                                         source_url: it.source_url || "",
                                     }
                                 })
@@ -1784,6 +1845,7 @@ export default function AdminProducts() {
                             <th className="hidden p-2 md:table-cell">Stock</th>
                             <th className="hidden p-2 md:table-cell">Categoría</th>
                             <th className="p-2 text-center">Inicio</th>
+                            {bestSellersEnabled && <th className="p-2 text-center">Más Vendidos</th>}
                             {/*  <th className="p-2">Sabores</th> */}
                             <th className="hidden p-2 md:table-cell">Estado</th>
                             <th className="p-2"></th>
@@ -1803,10 +1865,12 @@ export default function AdminProducts() {
                                     ? Number(selectedOption.stock)
                                     : (Number.isFinite(Number(p?.stock)) ? Number(p.stock) : 0);
                             const isMobileExpanded = expandedMobileProductId === p.id;
-                            const tableColSpan = budgetMode ? 14 : 12;
+                            const tableColSpan = (budgetMode ? 14 : 12) + (bestSellersEnabled ? 1 : 0);
                             const isFeaturedSelected = featuredProductIds.includes(Number(p.id));
                             const featuredLimitReached = featuredProductIds.length >= MAX_HOME_FEATURED_PRODUCTS;
                             const isSavingFeatured = Number(savingFeaturedId) === Number(p.id);
+                            const isBestSellerSelected = isBestSellerProduct(p);
+                            const isSavingBestSeller = Number(savingBestSellerId) === Number(p.id);
 
                             return (
                                 <Fragment key={p.id}>
@@ -2027,6 +2091,19 @@ export default function AdminProducts() {
                                                 className="h-4 w-4 cursor-pointer accent-blue-600 disabled:cursor-not-allowed"
                                             />
                                         </td>
+                                        {bestSellersEnabled && (
+                                            <td className="p-2 text-center">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isBestSellerSelected}
+                                                    disabled={isSavingBestSeller}
+                                                    onChange={(e) => toggleBestSellerProduct(p, e.target.checked)}
+                                                    aria-label={isBestSellerSelected ? "Quitar de Más Vendidos" : "Agregar a Más Vendidos"}
+                                                    title={isBestSellerSelected ? "Quitar de Más Vendidos" : "Mostrar en Más Vendidos"}
+                                                    className="h-4 w-4 cursor-pointer accent-green-600 disabled:cursor-not-allowed"
+                                                />
+                                            </td>
+                                        )}
                                         <td className="hidden p-2 text-center md:table-cell">
                                             {/* Toggle visual Estado con aviso solo en filtro activos/inactivos */}
                                             <button
@@ -2183,6 +2260,7 @@ export default function AdminProducts() {
                                                             flavor_stock_mode: flavorStockMode,
                                                             stock: flavorStockMode ? sum : (Number.isFinite(Number(p.stock)) ? Number(p.stock) : 0),
                                                             show_on_home: featuredProductIds.includes(Number(p.id)),
+                                                            show_in_best_sellers: isBestSellerProduct(p),
                                                         });
                                                     }}
                                                     className="px-3 py-1 border rounded hover:bg-gray-50"
@@ -2266,6 +2344,22 @@ export default function AdminProducts() {
                                                             />
                                                         </div>
                                                     </div>
+                                                    {bestSellersEnabled && (
+                                                        <div>
+                                                            <div className="text-xs uppercase tracking-wide text-gray-500">Más Vendidos</div>
+                                                            <div className="mt-1">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={isBestSellerSelected}
+                                                                    disabled={isSavingBestSeller}
+                                                                    onChange={(e) => toggleBestSellerProduct(p, e.target.checked)}
+                                                                    aria-label={isBestSellerSelected ? "Quitar de Más Vendidos" : "Agregar a Más Vendidos"}
+                                                                    title={isBestSellerSelected ? "Quitar de Más Vendidos" : "Mostrar en Más Vendidos"}
+                                                                    className="h-4 w-4 cursor-pointer accent-green-600 disabled:cursor-not-allowed"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                     <div>
                                                         <div className="text-xs uppercase tracking-wide text-gray-500">Desc. corta</div>
                                                         <div className="mt-1">
@@ -2880,6 +2974,7 @@ export default function AdminProducts() {
                                     {PERFUME_CATEGORY_DEFINITIONS.map((category) => {
                                         const id = Number(category.id);
                                         const disabled =
+                                            id === BEST_SELLERS_CATEGORY_ID ||
                                             Boolean(category.children?.length) ||
                                             (
                                                 form.multi_category_enabled &&
@@ -3007,6 +3102,18 @@ export default function AdminProducts() {
                             />
                             Mandar al inicio
                         </label>
+
+                        {bestSellersEnabled && (
+                            <label className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    checked={Boolean(form.show_in_best_sellers)}
+                                    onChange={(e) => setForm({ ...form, show_in_best_sellers: e.target.checked })}
+                                    className="accent-green-600"
+                                />
+                                Más vendidos
+                            </label>
+                        )}
 
                         <div className="flex gap-2 justify-end">
                             <button type="button" onClick={() => setForm(null)} disabled={savingProduct} className="px-3 py-2 border rounded disabled:opacity-50 disabled:cursor-not-allowed">

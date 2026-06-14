@@ -34,6 +34,8 @@ PRICE_ADJUSTMENT_HISTORY_KEY = "price_adjustment_history"
 MAX_HOME_FEATURED_PRODUCTS = 12
 MULTI_CATEGORY_META_TYPE = "multi_category_meta"
 ADMIN_HIDDEN_PRODUCT_KEY = "is_active_product"
+BEST_SELLERS_CATEGORY_ID = 999999
+BEST_SELLERS_CATEGORY_NAME = "Más Vendidos"
 
 def _ensure_admin_settings_table():
     db.session.execute(text(f"""
@@ -127,6 +129,9 @@ def _serialize_admin_order(order):
 def _ensure_category_exists(category_id: int, category_name: str | None = None):
     category_id = int(category_id)
     clean_category_name = str(category_name or "").strip()
+
+    if category_id == BEST_SELLERS_CATEGORY_ID:
+        clean_category_name = BEST_SELLERS_CATEGORY_NAME
 
     if category_id not in CATEGORY_ID_TO_NAME and not clean_category_name:
         category_id = DEFAULT_CATEGORY_ID
