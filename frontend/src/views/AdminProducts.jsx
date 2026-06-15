@@ -1156,8 +1156,26 @@ export default function AdminProducts() {
             const currentProductId = form.id ? Number(form.id) : null;
             const wasFeatured = currentProductId ? featuredProductIds.includes(currentProductId) : false;
             const wantsFeatured = Boolean(form.show_on_home);
+            const rawManualExtraCategoryIds = form.multi_category_enabled
+                ? getExtraCategoryIds(form)
+                : [];
+            const explicitCategoryId = Number(form.category_id);
+            const categoryIdFromExtras = rawManualExtraCategoryIds[0];
+            const finalCategoryId =
+                Number.isFinite(explicitCategoryId) && explicitCategoryId > 0
+                    ? explicitCategoryId
+                    : categoryIdFromExtras;
+            const manualExtraCategoryIds =
+                Number.isFinite(explicitCategoryId) && explicitCategoryId > 0
+                    ? rawManualExtraCategoryIds
+                    : rawManualExtraCategoryIds.slice(1);
 
-            if (isParentCategoryId(form.category_id)) {
+            if (!Number.isFinite(finalCategoryId) || finalCategoryId <= 0) {
+                alert("Debes seleccionar una categoría.");
+                return;
+            }
+
+            if (isParentCategoryId(finalCategoryId)) {
                 alert("Debes seleccionar una subcategoría.");
                 return;
             }
@@ -1179,7 +1197,7 @@ export default function AdminProducts() {
             }))
 
             const activeFlavors = catalog.filter((x) => x.active).map((x) => x.name)
-            const enabled = shouldShowFlavors(form.category_id) && activeFlavors.length > 0
+            const enabled = shouldShowFlavors(finalCategoryId) && activeFlavors.length > 0
 
             // 🔒 Sanitiza y evita valores tipo "frutal" que causarían GET /frutal
             const normalizedImageUrl = (() => {
@@ -1196,9 +1214,6 @@ export default function AdminProducts() {
             delete cleanForm.show_in_best_sellers;
             delete cleanForm.multi_category_enabled;
             delete cleanForm.extra_category_draft;
-            const manualExtraCategoryIds = form.multi_category_enabled
-                ? getExtraCategoryIds(form)
-                : [];
             const finalExtraCategoryIds = bestSellersEnabled && form.show_in_best_sellers
                 ? Array.from(new Set([...manualExtraCategoryIds, BEST_SELLERS_CATEGORY_ID]))
                 : manualExtraCategoryIds;
@@ -1220,6 +1235,8 @@ export default function AdminProducts() {
             const directWholesale = parseFlexibleDecimal(form.price_wholesale);
             const payload = {
                 ...cleanForm,
+                category_id: finalCategoryId,
+                category_name: ID_TO_CATEGORY_NAME[finalCategoryId] || defaultCategoryName,
                 price:
                     Number.isFinite(directRetail) && directRetail > 0
                         ? directRetail
@@ -1640,8 +1657,8 @@ export default function AdminProducts() {
                 )}
                 <button
                     onClick={() => setForm({
-                        category_id: defaultCategoryId,
-                        category_name: defaultCategoryName,
+                        category_id: "",
+                        category_name: "",
                         extra_category_ids: [],
                         multi_category_enabled: false,
                         extra_category_draft: "",
@@ -2935,6 +2952,8 @@ export default function AdminProducts() {
                                     setForm((prev) => ({
                                         ...prev,
                                         multi_category_enabled: e.target.checked,
+                                        category_id: e.target.checked ? "" : prev.category_id,
+                                        category_name: e.target.checked ? "" : prev.category_name,
                                         extra_category_ids: e.target.checked ? (prev.extra_category_ids || []) : [],
                                         extra_category_draft: "",
                                     }))
@@ -2945,7 +2964,7 @@ export default function AdminProducts() {
 
                         <div className="space-y-2">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Categoría
+                                {form.multi_category_enabled ? "Agregar categoría" : "Categoría"}
                             </label>
                             <div className="flex items-center gap-2">
                                 <select
@@ -3014,37 +3033,8 @@ export default function AdminProducts() {
                             </div>
                         </div>
 
-                        {form.multi_category_enabled && (
+                        {form.multi_category_enabled && (form.extra_category_ids || []).length > 0 && (
                             <div className="space-y-2 rounded border p-3">
-                                <div className="flex items-center justify-between rounded border bg-gray-50 px-3 py-2 text-sm">
-                                    <span>{ID_TO_CATEGORY_NAME[form.category_id] || "Categoría principal"}</span>
-                                    <div className="flex items-center gap-2">
-                                        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
-                                            Principal
-                                        </span>
-                                        <button
-                                            type="button"
-                                            className="px-2 py-1 border rounded hover:bg-gray-50 text-red-600"
-                                            title="Eliminar principal"
-                                            onClick={() =>
-                                                setForm((prev) => {
-                                                    const [nextPrimary, ...restExtras] = (prev.extra_category_ids || []).map(Number);
-                                                    const nextCategoryId = Number.isFinite(nextPrimary) ? nextPrimary : "";
-                                                    return {
-                                                        ...prev,
-                                                        category_id: nextCategoryId,
-                                                        category_name: nextCategoryId ? ID_TO_CATEGORY_NAME[nextCategoryId] || defaultCategoryName : "",
-                                                        extra_category_ids: restExtras,
-                                                        extra_category_draft: "",
-                                                    };
-                                                })
-                                            }
-                                        >
-                                            🗑️
-                                        </button>
-                                    </div>
-                                </div>
-
                                 {(form.extra_category_ids || []).map((categoryId) => (
                                     <div key={categoryId} className="flex items-center justify-between rounded border px-3 py-2 text-sm">
                                         <span>{ID_TO_CATEGORY_NAME[categoryId] || `Categoría ${categoryId}`}</span>
