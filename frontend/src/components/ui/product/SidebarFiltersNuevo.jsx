@@ -221,7 +221,7 @@ export default function SidebarFiltersNuevo({
                                         : "text-stone-700 hover:text-[#d4af37] hover:border-[#d4af37]"
                                         }`}
                                 >
-                                    <span>{c.name}</span>
+                                    <span className="md:whitespace-nowrap">{c.name}</span>
                                     {hasChildren && (
                                         <span className={`transition-transform ${expanded ? "rotate-90" : ""}`}>›</span>
                                     )}
@@ -247,7 +247,7 @@ export default function SidebarFiltersNuevo({
                                                 : "text-stone-600 hover:text-[#d4af37] hover:border-[#d4af37]"
                                                 }`}
                                         >
-                                            {child.name}
+                                            <span className="md:whitespace-nowrap">{child.name}</span>
                                         </button>
                                     );
                                 })}

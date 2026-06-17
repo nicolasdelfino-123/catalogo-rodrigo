@@ -159,6 +159,10 @@ function HomeBrandCircles({ brands = [], onSelectBrand }) {
                             const isLattafa = normalizeBrandText(brand.label) === "lattafa";
                             const isMaisonAlhambra = normalizeBrandText(brand.label) === "maison alhambra";
                             const logoPaddingClass = isValentino ? "p-[0px]" : isLattafa ? "p-[8px]" : isMaisonAlhambra ? "p-[2px]" : "p-1";
+                            const logoSizePx = Number(brand.logoSizePx);
+                            const logoSizeStyle = Number.isFinite(logoSizePx) && logoSizePx > 0
+                                ? { width: `${logoSizePx}px`, height: `${logoSizePx}px` }
+                                : undefined;
 
                             return (
                                 <button
@@ -172,7 +176,8 @@ function HomeBrandCircles({ brands = [], onSelectBrand }) {
                                         <img
                                             src={getPublicMediaSrc(brand.image)}
                                             alt={brand.label}
-                                            className={`h-full w-full rounded-full bg-[#fffaf1] object-contain object-center ring-1 ring-white/70 transition duration-500 group-hover:scale-[1.035] ${logoPaddingClass}`}
+                                            className={`mx-auto rounded-full bg-[#fffaf1] object-contain object-center ring-1 ring-white/70 transition duration-500 group-hover:scale-[1.035] ${logoSizeStyle ? "" : `h-full w-full ${logoPaddingClass}`}`}
+                                            style={logoSizeStyle}
                                             loading="lazy"
                                         />
                                     </span>
@@ -258,10 +263,10 @@ function BrandProductsModal({ brand, products = [], onClose, returnTo }) {
                     <button
                         type="button"
                         onClick={onClose}
-                        className="grid h-10 w-10 flex-none place-items-center rounded-full border border-white/20 text-sm font-semibold leading-none text-white transition hover:border-[#d5b55c] hover:bg-white/10"
+                        className="brand-modal-close flex h-10 w-10 flex-none items-center justify-center rounded-full border border-red-500/60 bg-white text-lg font-bold leading-none text-red-600 transition hover:border-red-700 hover:bg-red-50 hover:text-red-700"
                         aria-label="Cerrar"
                     >
-                        X
+                        <span aria-hidden="true" className="brand-modal-close-x">X</span>
                     </button>
                 </div>
 
@@ -286,6 +291,31 @@ function BrandProductsModal({ brand, products = [], onClose, returnTo }) {
                     )}
                 </div>
             </section>
+            <style>{`
+                .brand-modal-close {
+                    color: #dc2626 !important;
+                    background-color: #ffffff !important;
+                    border-color: rgba(220, 38, 38, 0.6) !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    padding: 0 !important;
+                    line-height: 1 !important;
+                }
+
+                .brand-modal-close:hover {
+                    color: #b91c1c !important;
+                    background-color: #fef2f2 !important;
+                    border-color: #b91c1c !important;
+                }
+
+                .brand-modal-close-x {
+                    display: block !important;
+                    color: currentColor !important;
+                    line-height: 1 !important;
+                    transform: translateY(-1px);
+                }
+            `}</style>
         </div>
     );
 }
@@ -545,7 +575,7 @@ export default function InicioNuevo() {
   `}</style>
 
             {/* PRODUCTOS */}
-            <section className="max-w-7xl mx-auto px-2 sm:px-4 py-12">
+            <section className="max-w-7xl mx-auto px-2 sm:px-4 pt-12 pb-8 md:pb-10">
                 <div className="text-center mb-10">
                     <h2 className="text-2xl md:text-3xl font-serif font-semibold tracking-wide">
                         Productos Destacados
@@ -570,7 +600,7 @@ export default function InicioNuevo() {
                     </div>
                 )}
             </section>
-            <div className="flex justify-center mt-0 mb-1 lg:px-12 lg:py-12">
+            <div className="flex justify-center px-4 pt-0 pb-8 md:pb-10">
                 <div
                     onClick={() => navigate(location.pathname.startsWith("/mayorista") ? "/mayorista/products" : "/products")}
                     className="
@@ -596,9 +626,9 @@ shadow-lg shadow-amber-500/20
             {/*  <section id="asesoria">
                 <Asesoria />
             </section> */}
+            {false && (
             <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16" id='asesoria'>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-center">
-                    {/* Columna izquierda: texto */}
                     <div className="md:col-span-1 text-center md:text-left">
                         <span className="block text-sm tracking-[0.18em] font-semibold uppercase text-gray-500">
                             ¡Contactanos!
@@ -646,11 +676,8 @@ shadow-lg shadow-amber-500/20
                         </div>
                     </div>
 
-                    {/* Divider central (sólo desktop) */}
                     <div className="hidden md:block h-full w-px bg-gradient-to-b from-transparent via-gray-300 to-transparent mx-auto" />
 
-                    {/* Columna derecha: mapa (oscuro por CSS) */}
-                    {/* Columna derecha: mapa (oscuro por CSS) */}
                     <div className="md:col-span-1">
                         <div className="rounded-xl overflow-hidden shadow-lg ring-1 ring-gray-200 bg-black">
                             <div className="aspect-video md:aspect-[4/3] map-dark">
@@ -675,16 +702,14 @@ shadow-lg shadow-amber-500/20
                     </div>
                 </div>
 
-                {/* Filtro para “estilo oscuro” del iframe (sin API key) */}
                 <style>{`
     .map-dark iframe {
-      /* Ajustá estos valores si querés más/menos contraste */
       filter: invert(90%) hue-rotate(180deg) saturate(0.7) brightness(0.85) contrast(1.05);
-      /* Para mejorar la suavidad en algunos navegadores */
       transform: translateZ(0);
     }
   `}</style>
             </section>
+            )}
             {storeConfig.features?.showBrandCarousel !== false && (
                 <section className="relative bg-white py-8 fade-in-section border-y border-gray-200">
                     <div className="relative z-10 overflow-hidden whitespace-nowrap mx-0 md:mx-[104px]">

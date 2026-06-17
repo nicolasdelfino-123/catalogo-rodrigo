@@ -23,7 +23,7 @@ export const storeConfig = {
         footer: {
             colors: {
                 white: "#ffffff",
-                black: "#0b0b0d",
+                black: "#000000ff",
             },
         },
     },
@@ -149,19 +149,19 @@ export const storeConfig = {
     },
 
     contact: {
-        whatsapp: "5493534793366",
+        whatsapp: "59898754724",
         whatsappMessage: "Hola, quiero consultar por un perfume del catálogo",
-        whatsappDisplay: "+56 9 6407 7278",
+        whatsappDisplay: "+598 98 754 724",
         // Prefijos para el modal de presupuesto. Con un solo elemento se muestra fijo; con varios aparece un selector.
         phonePrefixes: [
             /* { label: "+56", value: "56", placeholder: "964077278" }, */
-            { label: "+54", value: "54", placeholder: "3534793366" },
+            { label: "+598", value: "598", placeholder: "98754724" },
             /*       { label: "+57", value: "57", placeholder: "3001234567" },
                   { label: "+58", value: "58", placeholder: "4121234567" }, */
         ],
 
-        instagram: "https://www.instagram.com/danna_decants_puq/",
-        instagramDisplay: "@danna_decants_puq",
+        instagram: "https://www.instagram.com/zahradecants.uy/",
+        instagramDisplay: "@zahradecants.uy",
 
         email: "nicolasdelfino585@gmail.com",
         /*  emailDisplay: "nicolasdelfino585@gmail.com", */
@@ -181,19 +181,20 @@ export const storeConfig = {
         // GIF del GlobalSpinner: se carga desde frontend/public. Si queres cambiarlo, pone el GIF en public y actualiza este nombre.
         globalSpinnerGif: "danna_spinner.gif",
         headerLogo: "header_logo.png",
-        footerLogo: "logo_danna.jpeg",
+        footerLogo: "f_l.jpeg",
         // label es visible; brand/aliases son opcionales para matchear el campo "Marca" cargado en admin.
         homeBrandCircles: [
             { label: "Afnan", brand: "Afnan", image: "c_afnan_logo.webp" },
-            { label: "Al Haramain", brand: "Al Haramain", image: "c_logo_al_haramain.webp" },
+            { label: "French Avenue", brand: "French Avenue", aliases: ["French"], image: "c_french.webp", logoSizePx: 92 },
+            /* { label: "Al Haramain", brand: "Al Haramain", image: "c_logo_al_haramain.webp" }, */
             { label: "Armaf", brand: "Armaf", image: "c_armaf_logo.png" },
-            { label: "Bharara", brand: "Bharara", image: "c_bharara.webp" },
+            /* { label: "Bharara", brand: "Bharara", image: "c_bharara.webp" }, */
             { label: "Valentino", brand: "Valentino", aliases: ["Vale"], image: "c_valen_.webp" },
             { label: "Jean Paul Gaultier", brand: "Jean Paul Gaultier", aliases: ["Gaultier"], image: "c_gaultier.png" },
             { label: "Kenzo", brand: "Kenzo", image: "c_kenzo.png" },
             { label: "Montale", brand: "Montale", image: "c_montale.png" },
             { label: "Lattafa", brand: "Lattafa", aliases: ["Latafa"], image: "c_lat.png" },
-            { label: "Maison Alhambra", brand: "Maison Alhambra", aliases: ["Maison"], image: "c_mai.png" },
+            /* { label: "Maison Alhambra", brand: "Maison Alhambra", aliases: ["Maison"], image: "c_mai.png" }, */
         ],
     },
 
