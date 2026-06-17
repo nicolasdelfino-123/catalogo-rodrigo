@@ -4,6 +4,7 @@ export const storeConfig = {
     features: {
         showHeaderContact: true,
         showBrandCarousel: true,
+        showHomeBrandCircles: true,
         coupon: false,
         priceAdjustment: false,
         // Activa/desactiva la categoría virtual "Más Vendidos" en header, footer, filtros, admin y modal de productos.
@@ -179,6 +180,15 @@ export const storeConfig = {
         globalSpinnerGif: "danna_spinner.gif",
         headerLogo: "logo_attar_prueba.png",
         footerLogo: "logo_danna.jpeg",
+        // label es visible; brand/aliases son opcionales para matchear el campo "Marca" cargado en admin.
+        homeBrandCircles: [
+            { label: "Afnan", brand: "Afnan", image: "c_afnan_logo.webp" },
+            { label: "Al Haramain", brand: "Al Haramain", image: "c_logo_al_haramain.webp" },
+            { label: "Armaf", brand: "Armaf", image: "c_armaf_logo.png" },
+            { label: "Bharara", brand: "Bharara", image: "c_bharara.webp" },
+            { label: "Lattafa", brand: "Lattafa", aliases: ["Latafa"], image: "c_latafa.png" },
+            { label: "Maison Alhambra", brand: "Maison Alhambra", aliases: ["Maison"], image: "c_maison.webp" },
+        ],
     },
 
     map: {

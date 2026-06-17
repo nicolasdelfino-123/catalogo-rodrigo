@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useLayoutEffect, useState } from "react";
+import React, { useContext, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Context } from "../js/store/appContext.jsx";
 import ProductCardPerfumes from "../components/ui/cards/ProductCardPerfumes.jsx";
@@ -55,11 +55,179 @@ const buildHeroTextBlockStyle = (settings = {}, base = {}) => ({
     background: cssValue(base.background, "#000000"),
 });
 
+const getPublicMediaSrc = (fileName) => {
+    if (!fileName) return "";
+    return fileName.startsWith("/") ? fileName : `/${fileName}`;
+};
+
+const normalizeBrandText = (value = "") =>
+    String(value)
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+
+const getBrandSearchTerms = (brand) => {
+    const terms = [brand?.brand, brand?.label, ...(Array.isArray(brand?.aliases) ? brand.aliases : [])];
+    return terms.map(normalizeBrandText).filter(Boolean);
+};
+
+const productMatchesBrand = (product, brand) => {
+    const productBrand = normalizeBrandText(product?.brand);
+    if (!productBrand) return false;
+    return getBrandSearchTerms(brand).some((term) => productBrand === term);
+};
+
+function HomeBrandCircles({ brands = [], onSelectBrand }) {
+    if (!brands.length) return null;
+
+    return (
+        <section className="relative overflow-hidden bg-[#f8f5f0] py-8 sm:py-10">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#d8b766] to-transparent" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[#ead8a4] to-transparent" />
+
+            <div className="mx-auto max-w-7xl">
+                <div className="mb-7 px-4 text-center sm:px-6 lg:px-8">
+                    <span className="block text-[11px] font-semibold uppercase tracking-[0.28em] text-[#9b7b2f]">
+                        Perfumeria fina
+                    </span>
+                    <h2 className="mt-2 font-serif text-[24px] font-semibold tracking-wide text-[#160d10] sm:text-3xl">
+                        Comprar por marca
+                    </h2>
+                </div>
+
+                <div className="home-brand-scroll flex gap-5 overflow-x-auto px-4 pb-2 pt-1 sm:gap-7 sm:px-6 lg:px-8">
+                    {brands.map((brand) => (
+                        <button
+                            key={`${brand.label}-${brand.image}`}
+                            type="button"
+                            onClick={() => onSelectBrand?.(brand)}
+                            className="group flex w-[116px] flex-none snap-center appearance-none flex-col items-center gap-3 border-0 bg-transparent p-0 text-center outline-none sm:w-[132px]"
+                            aria-label={`Ver marca ${brand.label}`}
+                        >
+                            <span className="relative grid h-[104px] w-[104px] place-items-center rounded-full bg-[conic-gradient(from_140deg,#f5dfa0,#9e7428,#fff7d8,#7c5b22,#f5dfa0)] p-[3px] shadow-[0_18px_42px_rgba(22,13,16,0.16)] transition duration-500 group-hover:-translate-y-1 group-hover:shadow-[0_24px_54px_rgba(22,13,16,0.24)] sm:h-[120px] sm:w-[120px]">
+                                <img
+                                    src={getPublicMediaSrc(brand.image)}
+                                    alt={brand.label}
+                                    className="h-full w-full rounded-full bg-[#fffaf1] object-cover object-center ring-1 ring-white/70 transition duration-500 group-hover:scale-[1.035]"
+                                    loading="lazy"
+                                />
+                            </span>
+                            <span className="max-w-full truncate font-serif text-sm font-semibold tracking-wide text-[#2a171b]">
+                                {brand.label}
+                            </span>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            <style>{`
+                .home-brand-scroll {
+                    justify-content: center;
+                    scroll-snap-type: x proximity;
+                    scrollbar-width: none;
+                    -webkit-overflow-scrolling: touch;
+                }
+
+                .home-brand-scroll::-webkit-scrollbar {
+                    display: none;
+                }
+
+                @media (max-width: 767px) {
+                    .home-brand-scroll {
+                        justify-content: flex-start;
+                    }
+                }
+            `}</style>
+        </section>
+    );
+}
+
+function BrandProductsModal({ brand, products = [], onClose, returnTo }) {
+    useEffect(() => {
+        if (!brand) return undefined;
+
+        const handleKeyDown = (event) => {
+            if (event.key === "Escape") onClose();
+        };
+
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        window.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [brand, onClose]);
+
+    if (!brand) return null;
+
+    return (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 px-3 py-4 backdrop-blur-sm sm:px-6">
+            <button
+                type="button"
+                className="absolute inset-0 h-full w-full cursor-default"
+                aria-label="Cerrar marcas"
+                onClick={onClose}
+            />
+
+            <section className="relative flex max-h-[88vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-[#fbfaf7] shadow-2xl ring-1 ring-white/30">
+                <div className="flex items-start justify-between gap-4 border-b border-[#eadfbd] bg-[#120a0d] px-4 py-4 text-white sm:px-6">
+                    <div className="min-w-0">
+                        <span className="block text-[10px] font-semibold uppercase tracking-[0.28em] text-[#d5b55c]">
+                            Comprar por marca
+                        </span>
+                        <h3 className="mt-1 truncate font-serif text-2xl font-semibold tracking-wide sm:text-3xl">
+                            {brand.label}
+                        </h3>
+                        <p className="mt-1 text-sm text-stone-300">
+                            {products.length} {products.length === 1 ? "producto disponible" : "productos disponibles"}
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="grid h-10 w-10 flex-none place-items-center rounded-full border border-white/20 text-sm font-semibold leading-none text-white transition hover:border-[#d5b55c] hover:bg-white/10"
+                        aria-label="Cerrar"
+                    >
+                        X
+                    </button>
+                </div>
+
+                <div className="overflow-y-auto px-3 py-5 sm:px-6 sm:py-6">
+                    {products.length > 0 ? (
+                        <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
+                            {products.map((product) => (
+                                <div key={product.id} data-product-id={product.id}>
+                                    <ProductCardPerfumes product={product} returnTo={returnTo} isGrid={false} />
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="mx-auto flex min-h-[220px] max-w-xl flex-col items-center justify-center text-center">
+                            <h4 className="font-serif text-2xl font-semibold text-[#160d10]">
+                                Todavia no hay productos de esta marca
+                            </h4>
+                            {/*  <p className="mt-3 text-sm leading-relaxed text-stone-500">
+                                Cuando cargues productos desde el panel admin con la marca "{brand.label}", van a aparecer aca automaticamente.
+                            </p> */}
+                        </div>
+                    )}
+                </div>
+            </section>
+        </div>
+    );
+}
+
 export default function InicioNuevo() {
     const { store, actions } = useContext(Context);
     const location = useLocation();
     const navigate = useNavigate();
     const [homeFeaturedIds, setHomeFeaturedIds] = useState(null);
+    const [selectedHomeBrand, setSelectedHomeBrand] = useState(null);
     const heroImageDesktop = `/${storeConfig.media.heroImageDesktop || storeConfig.media.heroImage || ""}`;
     const heroImageMobile = `/${storeConfig.media.heroImageMobile || storeConfig.media.heroImageDesktop || storeConfig.media.heroImage || ""}`;
     const heroConfig = storeConfig.hero || {};
@@ -67,6 +235,9 @@ export default function InicioNuevo() {
     const mobileHero = heroConfig.mobile || {};
     const textBlockConfig = heroConfig.textBlock || {};
     const showHeroTextBlock = textBlockConfig.enabled === true;
+    const homeBrandCircles = Array.isArray(storeConfig.media?.homeBrandCircles)
+        ? storeConfig.media.homeBrandCircles
+        : [];
 
     useEffect(() => {
         if (actions?.fetchProducts) {
@@ -126,6 +297,10 @@ export default function InicioNuevo() {
         : homeFeaturedIds.length > 0
             ? selectedHomeProducts
             : fallbackFeaturedProducts;
+    const selectedBrandProducts = useMemo(() => {
+        if (!selectedHomeBrand) return [];
+        return allProducts.filter((product) => productMatchesBrand(product, selectedHomeBrand));
+    }, [allProducts, selectedHomeBrand]);
 
 
     useLayoutEffect(() => {
@@ -250,6 +425,17 @@ export default function InicioNuevo() {
                     )}
                 </div>
             </section>
+            {storeConfig.features?.showHomeBrandCircles === true && (
+                <>
+                    <HomeBrandCircles brands={homeBrandCircles} onSelectBrand={setSelectedHomeBrand} />
+                    <BrandProductsModal
+                        brand={selectedHomeBrand}
+                        products={selectedBrandProducts}
+                        returnTo={location.pathname}
+                        onClose={() => setSelectedHomeBrand(null)}
+                    />
+                </>
+            )}
             {/* 
             <div className="relative z-10 overflow-hidden whitespace-nowrap bg-gradient-to-r from-black via-[#0B0608] to-black py-3">
          
