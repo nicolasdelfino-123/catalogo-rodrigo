@@ -10,6 +10,10 @@ export const BEST_SELLERS_CATEGORY_SLUG = "mas-vendidos";
 const PERFUME_CATEGORY_ID_DEFINITIONS = [
     { id: 1, fallbackName: "Masculinos", slug: "masculinos" },
     { id: 2, fallbackName: "Femeninos", slug: "femeninos" },
+    { id: 3, fallbackName: "Unisex", slug: "unisex" },
+    { id: 4, fallbackName: "Perfumes Árabes", slug: "perfumes-arabes" },
+    { id: 5, fallbackName: "Perfumes de Diseñador", slug: "perfumes-de-disenador" },
+    { id: 6, fallbackName: "Perfumes de Nicho", slug: "perfumes-de-nicho" },
 ];
 
 const slugifyCategoryLabel = (value = "") =>

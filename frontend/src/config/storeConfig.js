@@ -8,7 +8,7 @@ export const storeConfig = {
         coupon: false,
         priceAdjustment: false,
         // Activa/desactiva la categoría virtual "Más Vendidos" en header, footer, filtros, admin y modal de productos.
-        bestSellers: true,
+        bestSellers: false,
         headerTheme: "black", // "black" | "white"
         footerTheme: "black", // "black" | "white"
     },
@@ -117,25 +117,27 @@ export const storeConfig = {
         // slug es opcional; si no lo ponés, usa el slug técnico definido en perfumeCategories o lo genera desde el label.
         categories: [
             {
-                id: 1,
-                label: "Perfumes",
-                slug: "perfumes",
+                id: 4,
+                label: "Perfumes Árabes",
+                slug: "perfumes-arabes",
                 emoji: "✨",
                 children: [
-                    { id: 3, label: "Femeninos", slug: "femeninos", emoji: "🌸" },
-                    { id: 4, label: "Masculinos", slug: "masculinos", emoji: "🖤" },
-                    { id: 5, label: "Unisex", slug: "unisex", emoji: "✨" },
+                    { id: 1, label: "Masculinos", slug: "masculinos", emoji: "🖤" },
+                    { id: 2, label: "Femeninos", slug: "femeninos", emoji: "🌸" },
+                    { id: 3, label: "Unisex", slug: "unisex", emoji: "✨" },
                 ],
             },
             {
-                id: 2,
-                label: "Gafas",
-                slug: "gafas",
-                emoji: "🕶️",
-                children: [
-                    { id: 6, label: "Ray-Ban", slug: "ray-ban", emoji: "🕶️" },
-                    { id: 7, label: "Scuderia Ferrari", slug: "scuderia-ferrari", emoji: "🏎️" },
-                ],
+                id: 5,
+                label: "Perfumes de Diseñador",
+                slug: "perfumes-de-disenador",
+                emoji: "◆",
+            },
+            {
+                id: 6,
+                label: "Perfumes de Nicho",
+                slug: "perfumes-de-nicho",
+                emoji: "★",
             },
         ],
     },
@@ -173,12 +175,12 @@ export const storeConfig = {
 
     media: {
         // Hero desktop: se carga desde frontend/public. Escribi solo el nombre del archivo o una ruta publica, por ejemplo "f3_si.png".
-        heroImageDesktop: "porta_si.png",
+        heroImageDesktop: "ban_d.jpeg",
         // Hero mobile: se carga desde frontend/public. Escribi solo el nombre del archivo o una ruta publica, por ejemplo "f3_si.png".
-        heroImageMobile: "porta_movil.png",
+        heroImageMobile: "ban_m.jpeg",
         // GIF del GlobalSpinner: se carga desde frontend/public. Si queres cambiarlo, pone el GIF en public y actualiza este nombre.
         globalSpinnerGif: "danna_spinner.gif",
-        headerLogo: "logo_attar_prueba.png",
+        headerLogo: "header_logo.png",
         footerLogo: "logo_danna.jpeg",
         // label es visible; brand/aliases son opcionales para matchear el campo "Marca" cargado en admin.
         homeBrandCircles: [

@@ -296,8 +296,8 @@ export default function InicioNuevo() {
     const navigate = useNavigate();
     const [homeFeaturedIds, setHomeFeaturedIds] = useState(null);
     const [selectedHomeBrand, setSelectedHomeBrand] = useState(null);
-    const heroImageDesktop = `/${storeConfig.media.heroImageDesktop || storeConfig.media.heroImage || ""}`;
-    const heroImageMobile = `/${storeConfig.media.heroImageMobile || storeConfig.media.heroImageDesktop || storeConfig.media.heroImage || ""}`;
+    const heroImageDesktop = getPublicMediaSrc(storeConfig.media?.heroImageDesktop || storeConfig.media?.heroImage || "");
+    const heroImageMobile = getPublicMediaSrc(storeConfig.media?.heroImageMobile || storeConfig.media?.heroImageDesktop || storeConfig.media?.heroImage || "");
     const heroConfig = storeConfig.hero || {};
     const desktopHero = heroConfig.desktop || {};
     const mobileHero = heroConfig.mobile || {};

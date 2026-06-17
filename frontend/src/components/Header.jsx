@@ -10,7 +10,11 @@ import { PERFUME_CATEGORY_TREE } from "../utils/perfumeCategories.js";
 import { storeConfig } from "../config/storeConfig.js";
 
 const API = import.meta.env.VITE_BACKEND_URL?.replace(/\/+$/, "") || "";
-const headerLogo = `/${storeConfig.media.headerLogo}`;
+const getPublicMediaSrc = (fileName = "") => {
+  if (!fileName) return "";
+  return fileName.startsWith("/") ? fileName : `/${fileName}`;
+};
+const headerLogo = getPublicMediaSrc(storeConfig.media?.headerLogo);
 const showHeaderContact = storeConfig.features?.showHeaderContact ?? true;
 const headerThemeSource = storeConfig.features?.headerTheme;
 const headerTheme = headerThemeSource === "white" ? "white" : "black";
@@ -280,9 +284,8 @@ export default function Header() {
     })),
   }));
   const activeProductCategory =
-    productCategories.find((category) => category.route === activeProductCategoryRoute) ||
-    productCategories.find((category) => category.children.length > 0) ||
-    null;
+    productCategories.find((category) => category.route === activeProductCategoryRoute) || null;
+  const activeProductCategoryHasChildren = activeProductCategory?.children?.length > 0;
 
   const goToContact = (e) => {
     e.preventDefault();
@@ -386,15 +389,13 @@ export default function Header() {
                 onMouseEnter={() => {
                   if (productsCloseTimer.current) clearTimeout(productsCloseTimer.current);
                   setProductsDropdownOpen(true);
-                  if (!activeProductCategoryRoute) {
-                    const firstWithChildren = productCategories.find((category) => category.children.length > 0);
-                    setActiveProductCategoryRoute(firstWithChildren?.route || "");
-                  }
+                  setActiveProductCategoryRoute("");
                 }}
                 onMouseLeave={() => {
                   if (productsCloseTimer.current) clearTimeout(productsCloseTimer.current);
                   productsCloseTimer.current = setTimeout(() => {
                     setProductsDropdownOpen(false);
+                    setActiveProductCategoryRoute("");
                   }, 180);
                 }}
               >
@@ -402,15 +403,11 @@ export default function Header() {
                   onClick={() => {
                     const nextOpen = !productsDropdownOpen;
                     setProductsDropdownOpen(nextOpen);
-                    if (nextOpen && !activeProductCategoryRoute) {
-                      const firstWithChildren = productCategories.find((category) => category.children.length > 0);
-                      setActiveProductCategoryRoute(firstWithChildren?.route || "");
-                    }
+                    if (nextOpen) setActiveProductCategoryRoute("");
                   }}
                   className={`flex items-center ${headerLinkClass} transition-all duration-300 bg-transparent p-0 border-0 rounded-none appearance-none focus:outline-none focus:ring-0 hover:bg-transparent active:bg-transparent uppercase`}
                   style={{ backgroundColor: 'transparent', boxShadow: 'none' }}
                 >
-
                   Productos
                   <svg
                     className={`ml-1 w-4 h-4 transition-transform ${productsDropdownOpen ? 'rotate-180' : ''}`}
@@ -424,7 +421,7 @@ export default function Header() {
 
                 {/* Dropdown Menu */}
                 <div
-                  className={`absolute left-0 top-full -mt-px w-[38rem] ${dropdownSurfaceClass}
+                  className={`absolute left-0 top-full -mt-px ${activeProductCategoryHasChildren ? "w-[38rem]" : "w-[17rem]"} ${dropdownSurfaceClass}
   rounded-b-xl rounded-t-none
   shadow-2xl
   backdrop-blur-lg z-50 overflow-hidden
@@ -432,15 +429,16 @@ export default function Header() {
   ${productsDropdownOpen ? "opacity-100 translate-y-0 visible" : "opacity-0 -translate-y-2 invisible"}
 `}
                 >
-
-                  <div className={`grid grid-cols-[17rem_1fr] border-t-2 ${dropdownTopBorderClass}`}>
-                    <div className={`py-3 border-r ${isWhiteHeader ? "border-gray-100" : "border-amber-500/10"}`}>
+                  <div className={`grid ${activeProductCategoryHasChildren ? "grid-cols-[17rem_1fr]" : "grid-cols-[17rem]"} border-t-2 ${dropdownTopBorderClass}`}>
+                    <div className={`py-3 ${activeProductCategoryHasChildren ? `border-r ${isWhiteHeader ? "border-gray-100" : "border-amber-500/10"}` : ""}`}>
                       <Link
                         to={withWholesale("/products")}
                         className={`flex items-center px-5 py-3 text-[15px] ${dropdownLinkClass} transition-all duration-200`}
+                        onMouseEnter={() => setActiveProductCategoryRoute("")}
                         onClick={() => {
                           window.scrollTo({ top: 0, behavior: "smooth" });
                           setProductsDropdownOpen(false);
+                          setActiveProductCategoryRoute("");
                         }}
                       >
                         Ver todos los productos
@@ -455,9 +453,11 @@ export default function Header() {
                               key={category.route}
                               to={withWholesale(category.route)}
                               className={`block px-5 py-3 text-[15px] ${dropdownLinkClass} transition-all duration-200`}
+                              onMouseEnter={() => setActiveProductCategoryRoute("")}
                               onClick={() => {
                                 window.scrollTo({ top: 0, behavior: "smooth" });
                                 setProductsDropdownOpen(false);
+                                setActiveProductCategoryRoute("");
                               }}
                             >
                               <span className="mr-3 text-base opacity-80">{category.icon}</span>
@@ -484,32 +484,27 @@ export default function Header() {
                       })}
                     </div>
 
-                    <div className="py-3">
-                      {activeProductCategory?.children?.length > 0 ? (
-                        <>
-                          <div className={`px-5 pb-2 text-[13px] uppercase tracking-wider ${isWhiteHeader ? "text-gray-500" : "text-gray-500"}`}>
-                            {activeProductCategory.name.toUpperCase()}
-                          </div>
-                          {activeProductCategory.children.map((child) => (
-                            <Link
-                              key={child.route}
-                              to={withWholesale(child.route)}
-                              className={`block whitespace-nowrap px-5 py-3 text-[15px] normal-case tracking-normal ${dropdownLinkClass} transition-colors`}
-                              onClick={() => {
-                                window.scrollTo({ top: 0, behavior: "smooth" });
-                                setProductsDropdownOpen(false);
-                              }}
-                            >
-                              {child.name}
-                            </Link>
-                          ))}
-                        </>
-                      ) : (
-                        <div className={`px-5 py-3 text-[15px] ${isWhiteHeader ? "text-gray-500" : "text-gray-500"}`}>
-                          Selecciona una categoría
+                    {activeProductCategoryHasChildren && (
+                      <div className="py-3">
+                        <div className={`px-5 pb-2 text-[13px] uppercase tracking-wider ${isWhiteHeader ? "text-gray-500" : "text-gray-500"}`}>
+                          {activeProductCategory.name.toUpperCase()}
                         </div>
-                      )}
-                    </div>
+                        {activeProductCategory.children.map((child) => (
+                          <Link
+                            key={child.route}
+	                            to={withWholesale(child.route)}
+	                            className={`block whitespace-nowrap px-5 py-3 text-[15px] normal-case tracking-normal ${dropdownLinkClass} transition-colors`}
+	                            onClick={() => {
+	                              window.scrollTo({ top: 0, behavior: "smooth" });
+	                              setProductsDropdownOpen(false);
+	                              setActiveProductCategoryRoute("");
+	                            }}
+	                          >
+                            {child.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 

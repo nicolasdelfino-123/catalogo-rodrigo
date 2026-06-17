@@ -426,6 +426,20 @@ const isParentCategoryId = (categoryId) => {
     return Boolean(category?.children?.length);
 };
 
+const collectCategoryAndDescendantIds = (category) => [
+    Number(category.id),
+    ...(category.children || []).flatMap(collectCategoryAndDescendantIds),
+];
+
+const getCategoryFilterIdsByName = (categoryName = "") => {
+    const normalized = normalizeCategoryLabel(categoryName);
+    const category = PERFUME_CATEGORY_DEFINITIONS.find(
+        (item) => normalizeCategoryLabel(item.name) === normalized
+    );
+
+    return category ? new Set(collectCategoryAndDescendantIds(category)) : null;
+};
+
 const getExtraCategoryIds = (product = {}, { includeBestSellers = false } = {}) => {
     const primaryId = Number(product?.category_id);
     const rawIds = Array.isArray(product?.extra_category_ids)
@@ -1462,6 +1476,14 @@ export default function AdminProducts() {
 
     const selectedBudgetCount = selectedBudgetItems.length;
 
+    const selectedCategoryFilterIds = useMemo(
+        () =>
+            selectedCategory !== "Todos" && selectedCategory !== HOME_CATEGORY_FILTER
+                ? getCategoryFilterIdsByName(selectedCategory)
+                : null,
+        [selectedCategory]
+    );
+
     const filtered = products.filter((p) => {
         const matchesSearch =
             !q ||
@@ -1473,9 +1495,8 @@ export default function AdminProducts() {
             (selectedCategory === HOME_CATEGORY_FILTER && featuredProductIds.includes(Number(p.id))) ||
             (
                 selectedCategory !== HOME_CATEGORY_FILTER &&
-                getProductCategoryIds(p).some((categoryId) =>
-                    normalizeCategoryLabel(ID_TO_CATEGORY_NAME[categoryId]) === normalizeCategoryLabel(selectedCategory)
-                )
+                selectedCategoryFilterIds &&
+                getProductCategoryIds(p).some((categoryId) => selectedCategoryFilterIds.has(Number(categoryId)))
             );
 
         const isActive = Boolean(p?.is_active);
