@@ -90,10 +90,10 @@ function HomeBrandCircles({ brands = [], onSelectBrand }) {
             <div className="mx-auto max-w-7xl">
                 <div className="mb-7 px-4 text-center sm:px-6 lg:px-8">
                     <span className="block text-[11px] font-semibold uppercase tracking-[0.28em] text-[#9b7b2f]">
-                        Perfumeria fina
+                        Zahra Perfumes
                     </span>
                     <h2 className="mt-2 font-serif text-[24px] font-semibold tracking-wide text-[#160d10] sm:text-3xl">
-                        Comprar por marca
+                        Explora nuestra colección
                     </h2>
                 </div>
 
