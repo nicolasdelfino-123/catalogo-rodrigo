@@ -2,7 +2,7 @@ export const storeConfig = {
     storeName: " Store Perfumes",
 
     features: {
-        showHeaderContact: true,
+        showHeaderContact: false,
         showBrandCarousel: true,
         showHomeBrandCircles: true,
         coupon: false,
@@ -17,7 +17,7 @@ export const storeConfig = {
         header: {
             colors: {
                 white: "#ffffff",
-                black: "#0B0608",
+                black: "#000000ff",
             },
         },
         footer: {
@@ -179,13 +179,13 @@ export const storeConfig = {
         // Hero mobile: se carga desde frontend/public. Escribi solo el nombre del archivo o una ruta publica, por ejemplo "f3_si.png".
         heroImageMobile: "ban_m.jpeg",
         // GIF del GlobalSpinner: se carga desde frontend/public. Si queres cambiarlo, pone el GIF en public y actualiza este nombre.
-        globalSpinnerGif: "danna_spinner.gif",
-        headerLogo: "header_logo.png",
+        globalSpinnerGif: "g_r.gif",
+        headerLogo: "h_l_si.png",
         footerLogo: "f_l.jpeg",
         // label es visible; brand/aliases son opcionales para matchear el campo "Marca" cargado en admin.
         homeBrandCircles: [
             { label: "Afnan", brand: "Afnan", image: "c_afnan_logo.webp" },
-            { label: "French Avenue", brand: "French Avenue", aliases: ["French"], image: "c_french.webp", logoSizePx: 92 },
+            { label: "French Avenue", brand: "French Avenue", aliases: ["French"], image: "c_french.webp" },
             /* { label: "Al Haramain", brand: "Al Haramain", image: "c_logo_al_haramain.webp" }, */
             { label: "Armaf", brand: "Armaf", image: "c_armaf_logo.png" },
             /* { label: "Bharara", brand: "Bharara", image: "c_bharara.webp" }, */

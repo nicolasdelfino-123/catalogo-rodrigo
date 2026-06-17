@@ -144,10 +144,10 @@ function HomeBrandCircles({ brands = [], onSelectBrand }) {
                         type="button"
                         onClick={() => scrollBrands(-1)}
                         disabled={!scrollState.canScrollLeft}
-                        className="absolute left-3 top-[48px] z-20 hidden h-11 w-11 place-items-center rounded-full border border-[#d6b75c]/60 bg-[#120a0d]/90 text-[#f7dfa0] shadow-[0_14px_34px_rgba(18,10,13,0.22)] backdrop-blur transition duration-300 hover:-translate-y-0.5 hover:border-[#f3d783] hover:bg-[#1c1014] disabled:pointer-events-none disabled:translate-y-0 disabled:opacity-0 md:grid lg:left-5"
+                        className="home-brand-arrow absolute left-3 top-[48px] z-20 hidden h-11 w-11 place-items-center rounded-full border border-[#d6b75c]/60 bg-[#120a0d]/90 text-white shadow-[0_14px_34px_rgba(18,10,13,0.22)] backdrop-blur transition duration-300 hover:-translate-y-0.5 hover:border-[#f3d783] hover:bg-[#1c1014] disabled:pointer-events-none disabled:translate-y-0 disabled:opacity-0 md:grid lg:left-5"
                         aria-label="Ver marcas anteriores"
                     >
-                        <ChevronLeft aria-hidden="true" className="h-5 w-5" strokeWidth={1.8} />
+                        <ChevronLeft aria-hidden="true" className="home-brand-arrow-icon h-5 w-5" strokeWidth={1.8} />
                     </button>
 
                     <div
@@ -193,10 +193,10 @@ function HomeBrandCircles({ brands = [], onSelectBrand }) {
                         type="button"
                         onClick={() => scrollBrands(1)}
                         disabled={!scrollState.canScrollRight}
-                        className="absolute right-3 top-[48px] z-20 hidden h-11 w-11 place-items-center rounded-full border border-[#d6b75c]/60 bg-[#120a0d]/90 text-[#f7dfa0] shadow-[0_14px_34px_rgba(18,10,13,0.22)] backdrop-blur transition duration-300 hover:-translate-y-0.5 hover:border-[#f3d783] hover:bg-[#1c1014] disabled:pointer-events-none disabled:translate-y-0 disabled:opacity-0 md:grid lg:right-5"
+                        className="home-brand-arrow absolute right-3 top-[48px] z-20 hidden h-11 w-11 place-items-center rounded-full border border-[#d6b75c]/60 bg-[#120a0d]/90 text-white shadow-[0_14px_34px_rgba(18,10,13,0.22)] backdrop-blur transition duration-300 hover:-translate-y-0.5 hover:border-[#f3d783] hover:bg-[#1c1014] disabled:pointer-events-none disabled:translate-y-0 disabled:opacity-0 md:grid lg:right-5"
                         aria-label="Ver más marcas"
                     >
-                        <ChevronRight aria-hidden="true" className="h-5 w-5" strokeWidth={1.8} />
+                        <ChevronRight aria-hidden="true" className="home-brand-arrow-icon h-5 w-5" strokeWidth={1.8} />
                     </button>
                 </div>
             </div>
@@ -211,6 +211,17 @@ function HomeBrandCircles({ brands = [], onSelectBrand }) {
 
                 .home-brand-scroll::-webkit-scrollbar {
                     display: none;
+                }
+
+                .home-brand-arrow,
+                .home-brand-arrow:hover,
+                .home-brand-arrow:focus {
+                    color: #ffffff !important;
+                }
+
+                .home-brand-arrow-icon {
+                    color: #ffffff !important;
+                    stroke: #ffffff !important;
                 }
             `}</style>
         </section>
