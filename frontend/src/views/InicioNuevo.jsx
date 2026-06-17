@@ -1,4 +1,5 @@
-import React, { useContext, useEffect, useLayoutEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Context } from "../js/store/appContext.jsx";
 import ProductCardPerfumes from "../components/ui/cards/ProductCardPerfumes.jsx";
@@ -80,6 +81,44 @@ const productMatchesBrand = (product, brand) => {
 };
 
 function HomeBrandCircles({ brands = [], onSelectBrand }) {
+    const scrollRef = useRef(null);
+    const [scrollState, setScrollState] = useState({ canScrollLeft: false, canScrollRight: false });
+
+    const updateScrollState = () => {
+        const scrollElement = scrollRef.current;
+        if (!scrollElement) return;
+
+        const maxScrollLeft = scrollElement.scrollWidth - scrollElement.clientWidth;
+        setScrollState({
+            canScrollLeft: scrollElement.scrollLeft > 2,
+            canScrollRight: scrollElement.scrollLeft < maxScrollLeft - 2,
+        });
+    };
+
+    useEffect(() => {
+        const scrollElement = scrollRef.current;
+        if (!scrollElement) return undefined;
+
+        updateScrollState();
+        scrollElement.addEventListener("scroll", updateScrollState, { passive: true });
+        window.addEventListener("resize", updateScrollState);
+
+        return () => {
+            scrollElement.removeEventListener("scroll", updateScrollState);
+            window.removeEventListener("resize", updateScrollState);
+        };
+    }, [brands.length]);
+
+    const scrollBrands = (direction) => {
+        const scrollElement = scrollRef.current;
+        if (!scrollElement) return;
+
+        scrollElement.scrollBy({
+            left: direction * Math.max(scrollElement.clientWidth * 0.68, 320),
+            behavior: "smooth",
+        });
+    };
+
     if (!brands.length) return null;
 
     return (
@@ -97,34 +136,69 @@ function HomeBrandCircles({ brands = [], onSelectBrand }) {
                     </h2>
                 </div>
 
-                <div className="home-brand-scroll flex gap-5 overflow-x-auto px-4 pb-2 pt-1 sm:gap-7 sm:px-6 lg:px-8">
-                    {brands.map((brand) => (
-                        <button
-                            key={`${brand.label}-${brand.image}`}
-                            type="button"
-                            onClick={() => onSelectBrand?.(brand)}
-                            className="group flex w-[116px] flex-none snap-center appearance-none flex-col items-center gap-3 border-0 bg-transparent p-0 text-center outline-none sm:w-[132px]"
-                            aria-label={`Ver marca ${brand.label}`}
-                        >
-                            <span className="relative grid h-[104px] w-[104px] place-items-center rounded-full bg-[conic-gradient(from_140deg,#f5dfa0,#9e7428,#fff7d8,#7c5b22,#f5dfa0)] p-[3px] shadow-[0_18px_42px_rgba(22,13,16,0.16)] transition duration-500 group-hover:-translate-y-1 group-hover:shadow-[0_24px_54px_rgba(22,13,16,0.24)] sm:h-[120px] sm:w-[120px]">
-                                <img
-                                    src={getPublicMediaSrc(brand.image)}
-                                    alt={brand.label}
-                                    className="h-full w-full rounded-full bg-[#fffaf1] object-cover object-center ring-1 ring-white/70 transition duration-500 group-hover:scale-[1.035]"
-                                    loading="lazy"
-                                />
-                            </span>
-                            <span className="max-w-full truncate font-serif text-sm font-semibold tracking-wide text-[#2a171b]">
-                                {brand.label}
-                            </span>
-                        </button>
-                    ))}
+                <div className="relative">
+                    <div className="pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-16 bg-gradient-to-r from-[#f8f5f0] via-[#f8f5f0]/80 to-transparent md:block" />
+                    <div className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden w-16 bg-gradient-to-l from-[#f8f5f0] via-[#f8f5f0]/80 to-transparent md:block" />
+
+                    <button
+                        type="button"
+                        onClick={() => scrollBrands(-1)}
+                        disabled={!scrollState.canScrollLeft}
+                        className="absolute left-3 top-[48px] z-20 hidden h-11 w-11 place-items-center rounded-full border border-[#d6b75c]/60 bg-[#120a0d]/90 text-[#f7dfa0] shadow-[0_14px_34px_rgba(18,10,13,0.22)] backdrop-blur transition duration-300 hover:-translate-y-0.5 hover:border-[#f3d783] hover:bg-[#1c1014] disabled:pointer-events-none disabled:translate-y-0 disabled:opacity-0 md:grid lg:left-5"
+                        aria-label="Ver marcas anteriores"
+                    >
+                        <ChevronLeft aria-hidden="true" className="h-5 w-5" strokeWidth={1.8} />
+                    </button>
+
+                    <div
+                        ref={scrollRef}
+                        className="home-brand-scroll flex gap-5 overflow-x-auto px-4 pb-2 pt-1 sm:gap-7 sm:px-6 lg:px-8"
+                    >
+                        {brands.map((brand) => {
+                            const isValentino = normalizeBrandText(brand.label) === "valentino";
+                            const isLattafa = normalizeBrandText(brand.label) === "lattafa";
+                            const isMaisonAlhambra = normalizeBrandText(brand.label) === "maison alhambra";
+                            const logoPaddingClass = isValentino ? "p-[0px]" : isLattafa ? "p-[8px]" : isMaisonAlhambra ? "p-[2px]" : "p-1";
+
+                            return (
+                                <button
+                                    key={`${brand.label}-${brand.image}`}
+                                    type="button"
+                                    onClick={() => onSelectBrand?.(brand)}
+                                    className="group flex w-[116px] flex-none snap-center appearance-none flex-col items-center gap-3 border-0 bg-transparent p-0 text-center outline-none sm:w-[132px]"
+                                    aria-label={`Ver marca ${brand.label}`}
+                                >
+                                    <span className="relative grid h-[104px] w-[104px] place-items-center rounded-full bg-[conic-gradient(from_140deg,#f5dfa0,#9e7428,#fff7d8,#7c5b22,#f5dfa0)] p-[3px] shadow-[0_18px_42px_rgba(22,13,16,0.16)] transition duration-500 group-hover:-translate-y-1 group-hover:shadow-[0_24px_54px_rgba(22,13,16,0.24)] sm:h-[120px] sm:w-[120px]">
+                                        <img
+                                            src={getPublicMediaSrc(brand.image)}
+                                            alt={brand.label}
+                                            className={`h-full w-full rounded-full bg-[#fffaf1] object-contain object-center ring-1 ring-white/70 transition duration-500 group-hover:scale-[1.035] ${logoPaddingClass}`}
+                                            loading="lazy"
+                                        />
+                                    </span>
+                                    <span className="max-w-full truncate font-serif text-sm font-semibold tracking-wide text-[#2a171b]">
+                                        {brand.label}
+                                    </span>
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={() => scrollBrands(1)}
+                        disabled={!scrollState.canScrollRight}
+                        className="absolute right-3 top-[48px] z-20 hidden h-11 w-11 place-items-center rounded-full border border-[#d6b75c]/60 bg-[#120a0d]/90 text-[#f7dfa0] shadow-[0_14px_34px_rgba(18,10,13,0.22)] backdrop-blur transition duration-300 hover:-translate-y-0.5 hover:border-[#f3d783] hover:bg-[#1c1014] disabled:pointer-events-none disabled:translate-y-0 disabled:opacity-0 md:grid lg:right-5"
+                        aria-label="Ver más marcas"
+                    >
+                        <ChevronRight aria-hidden="true" className="h-5 w-5" strokeWidth={1.8} />
+                    </button>
                 </div>
             </div>
 
             <style>{`
                 .home-brand-scroll {
-                    justify-content: center;
+                    justify-content: flex-start;
                     scroll-snap-type: x proximity;
                     scrollbar-width: none;
                     -webkit-overflow-scrolling: touch;
@@ -132,12 +206,6 @@ function HomeBrandCircles({ brands = [], onSelectBrand }) {
 
                 .home-brand-scroll::-webkit-scrollbar {
                     display: none;
-                }
-
-                @media (max-width: 767px) {
-                    .home-brand-scroll {
-                        justify-content: flex-start;
-                    }
                 }
             `}</style>
         </section>
