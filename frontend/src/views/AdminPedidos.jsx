@@ -18,6 +18,13 @@ export default function AdminPedidos() {
     const token =
         localStorage.getItem("token") || localStorage.getItem("admin_token");
 
+    const getPaymentMethodLabel = (method) => ({
+        mercadopago: "Mercado Pago",
+        transferencia: "Transferencia",
+        efectivo: "Efectivo",
+        coordinar: "A coordinar",
+    }[String(method || "").toLowerCase()] || method || "Sin informar");
+
     const fetchOrders = async () => {
         if (!token) return;
         try {
@@ -217,6 +224,10 @@ export default function AdminPedidos() {
                             selected.customer_phone ||
                             selected.shipping_address?.phone ||
                             "Sin teléfono";
+                        const paymentMethodLabel = getPaymentMethodLabel(selected.payment_method);
+                        const paymentMethodTitle = selected.payment_method === "mercadopago"
+                            ? " por Mercado Pago"
+                            : "";
 
                         return (
                             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -232,7 +243,7 @@ export default function AdminPedidos() {
                                     {/* HEADER PEDIDO */}
                                     <div className="mb-4">
                                         <h2 className="text-xl font-semibold">
-                                            {isWholesale ? "📦 Pedido Mayorista" : "🛍️ Pedido Minorista"} #{selected.public_order_number || selected.id}
+                                            {isWholesale ? "📦 Pedido Mayorista" : "🛍️ Pedido Minorista"}{paymentMethodTitle} #{selected.public_order_number || selected.id}
                                         </h2>
 
                                         <p className="text-sm text-gray-500">
@@ -252,11 +263,7 @@ export default function AdminPedidos() {
 
                                         <p>
                                             <strong>Forma de pago:</strong>{" "}
-                                            {{
-                                                transferencia: "Transferencia",
-                                                efectivo: "Efectivo",
-                                                coordinar: "A coordinar",
-                                            }[selected.payment_method] || selected.payment_method}
+                                            {paymentMethodLabel}
                                         </p>
 
                                         {coupon && (

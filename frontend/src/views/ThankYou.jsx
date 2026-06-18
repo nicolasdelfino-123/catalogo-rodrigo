@@ -1,6 +1,8 @@
-import { useEffect, useContext } from "react";
+import { useEffect, useContext, useMemo, useState } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { Context } from "../js/store/appContext.jsx";
+import { storeConfig } from "../config/storeConfig.js";
+import { formatCurrency } from "../utils/price.js";
 
 function useQuery() {
     return new URLSearchParams(useLocation().search);
@@ -8,6 +10,7 @@ function useQuery() {
 
 export default function ThankYou() {
     const { store, actions } = useContext(Context);
+    const [orderReport, setOrderReport] = useState(null);
 
     const q = useQuery();
     const navigate = useNavigate();
@@ -17,6 +20,73 @@ export default function ThankYou() {
     const paymentId = q.get("payment_id") || q.get("collection_id");
     const preferenceId = q.get("preference_id");
     const externalRef = q.get("external_reference");
+
+    useEffect(() => {
+        try {
+            const savedReport = localStorage.getItem("mpOrderReport");
+            if (savedReport) setOrderReport(JSON.parse(savedReport));
+        } catch (error) {
+            console.error("No se pudo leer el informe de Mercado Pago:", error);
+        }
+    }, []);
+
+    const storeReportMessage = useMemo(() => {
+        if (!orderReport) return "";
+
+        const customer = orderReport.customer || {};
+        const items = Array.isArray(orderReport.items) ? orderReport.items : [];
+        const lines = [];
+
+        lines.push("Hola! Compra por Mercado Pago aprobada.");
+        lines.push("");
+        lines.push("*Informe de compra*");
+        lines.push(`Estado: ${status || "approved"}`);
+        if (paymentId) lines.push(`ID de pago: ${paymentId}`);
+        if (preferenceId) lines.push(`Preferencia: ${preferenceId}`);
+        if (externalRef) lines.push(`Referencia: ${externalRef}`);
+        lines.push("");
+        lines.push("*Cliente*");
+        lines.push(`Nombre: ${customer.name || "No informado"}`);
+        lines.push(`Telefono: ${customer.phone || "No informado"}`);
+        lines.push(`Email: ${customer.email || "No informado"}`);
+        lines.push(`Zona / Localidad: ${customer.zone || "No informado"}`);
+        lines.push("");
+        lines.push("*Productos*");
+
+        if (items.length === 0) {
+            lines.push("No hay detalle de productos guardado.");
+        } else {
+            items.forEach((item) => {
+                const size = item.selected_size_ml ? ` - ${item.selected_size_ml}ml` : "";
+                const flavor = item.selected_flavor ? ` - ${item.selected_flavor}` : "";
+                lines.push(`- ${item.quantity} x ${item.title}${flavor}${size}`);
+                lines.push(`  ${formatCurrency(item.unit_price)} c/u - Subtotal: ${formatCurrency(item.subtotal)}`);
+            });
+        }
+
+        lines.push("");
+        if (orderReport.coupon) {
+            lines.push(`Cupon: ${orderReport.coupon.code} (${orderReport.coupon.percent}% OFF)`);
+            lines.push(`Descuento: ${formatCurrency(orderReport.coupon.discount)}`);
+        }
+        lines.push(`Total pagado: ${formatCurrency(orderReport.total || 0)}`);
+        lines.push("");
+        lines.push("Pedido pendiente de preparacion.");
+
+        return lines.join("\n");
+    }, [orderReport, status, paymentId, preferenceId, externalRef]);
+
+    const sendStoreReport = () => {
+        if (!storeReportMessage) {
+            alert("No encontramos el detalle del carrito para enviar el informe.");
+            return;
+        }
+
+        const phone = storeConfig.contact.whatsapp;
+        const url = `https://wa.me/${phone}?text=${encodeURIComponent(storeReportMessage)}`;
+        const opened = window.open(url, "_blank", "noopener,noreferrer");
+        if (!opened) window.location.href = url;
+    };
 
     useEffect(() => {
         const init = async () => {
@@ -49,6 +119,25 @@ export default function ThankYou() {
 
             console.log("✅ Pago aprobado - procesando...");
             console.log("💳 Payment ID:", paymentId);
+
+            // Asegura que el pedido quede guardado aunque el webhook de MP no llegue en local/ngrok.
+            if (paymentId) {
+                try {
+                    const syncResponse = await fetch(
+                        `${import.meta.env.VITE_BACKEND_URL}/api/mercadopago/sync-payment/${paymentId}`,
+                        { method: "POST" }
+                    );
+                    const syncData = await syncResponse.json().catch(() => ({}));
+
+                    if (!syncResponse.ok) {
+                        console.error("⚠️ No se pudo sincronizar la orden:", syncData);
+                    } else {
+                        console.log("✅ Orden sincronizada:", syncData);
+                    }
+                } catch (err) {
+                    console.error("❌ Error sincronizando orden:", err);
+                }
+            }
 
             // 1) Vaciar carrito con la nueva función
             await actions.resetCartAfterPayment();
@@ -130,22 +219,22 @@ export default function ThankYou() {
                             {externalRef && <li><span className="font-medium">Referencia:</span> {externalRef}</li>}
                         </ul>
                         <p className="text-xs text-gray-500 mt-3">
-                            El pedido se está procesando. En segundos estará disponible en "Mis pedidos".
+                            Enviá el informe a la tienda para que preparen tu compra.
                         </p>
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                        <Link
-                            to="/cuenta"
-                            className="px-5 py-3 rounded-lg bg-purple-600 text-white hover:bg-purple-700"
+                        <button
+                            onClick={sendStoreReport}
+                            className="px-4 py-2 rounded-md bg-[#25d366] text-white hover:bg-[#1ebe5d] font-semibold text-sm"
                         >
-                            Ver mis pedidos
-                        </Link>
+                            Enviar informe de compra a la tienda
+                        </button>
                         <button
                             onClick={() => navigate("/inicio")}
-                            className="px-5 py-3 rounded-lg border border-gray-300 hover:bg-gray-50"
+                            className="px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-50 text-sm"
                         >
-                            Seguir comprando
+                            Volver a Zahra Decants
                         </button>
                     </div>
                 </>
@@ -156,8 +245,8 @@ export default function ThankYou() {
                     <p className="text-gray-600 mb-6">
                         Cuando se acredite, vas a ver el pedido en tu cuenta.
                     </p>
-                    <Link to="/inicio" className="px-5 py-3 rounded-lg bg-gray-900 text-white">
-                        Volver a la tienda
+                    <Link to="/inicio" className="px-4 py-2 rounded-md bg-gray-900 text-white text-sm">
+                        Volver a Zahra Decants
                     </Link>
                 </>
             ) : (
@@ -167,8 +256,8 @@ export default function ThankYou() {
                     <p className="text-gray-600 mb-6">
                         Algo salió mal. Podés intentar nuevamente.
                     </p>
-                    <Link to="/checkout" className="px-5 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700">
-                        Volver al checkout
+                    <Link to="/inicio" className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 text-sm">
+                        Volver a Zahra Decants
                     </Link>
                 </>
             )}

@@ -6,6 +6,7 @@ import { storeConfig } from "../config/storeConfig.js";
 import CuponBox from "./cart/CuponBox.jsx";
 import { normalizeCouponCode, validateCoupon } from "../utils/coupons.js";
 import { formatCurrency, getCurrencySymbol } from "../utils/price.js";
+import mercadoPagoLogo from "../assets/mp-logo1.png";
 
 
 const API = import.meta.env.VITE_BACKEND_URL?.replace(/\/+$/, "") || "";
@@ -70,11 +71,12 @@ export default function Cart({ isOpen: controlledOpen, onClose: controlledOnClos
   const { store, actions } = useContext(Context);
   const [showCheckout, setShowCheckout] = useState(false);
   const [sendingOrder, setSendingOrder] = useState(false);
+  const [payingMercadoPago, setPayingMercadoPago] = useState(false);
   const [whatsappOrderPrompt, setWhatsappOrderPrompt] = useState(null);
 
   const [customerData, setCustomerData] = useState(() => {
     const saved = localStorage.getItem("customerData");
-    const defaults = { name: "", phone: "", zone: "", payment: "Coordinar" };
+    const defaults = { name: "", phone: "", email: "", zone: "", payment: "Coordinar" };
 
     if (!saved) return defaults;
 
@@ -407,6 +409,180 @@ ${couponEnabled && couponTotals ? `Cupón aplicado: ${couponTotals.code} (${coup
     }
   };
 
+  const payWithMercadoPago = async () => {
+    if (payingMercadoPago) return;
+
+    if (!store.cart || store.cart.length === 0) {
+      alert("Tu carrito está vacío");
+      return;
+    }
+
+    let customerName = customerData.name.trim();
+    let customerPhone = customerData.phone.trim();
+    let customerEmail = customerData.email.trim().toLowerCase();
+    let customerZone = customerData.zone.trim();
+
+    if (!customerName || !customerPhone || !customerEmail || !customerZone) {
+      if (isRouteMode) {
+        customerName = customerName || window.prompt("Nombre y Apellido")?.trim() || "";
+        customerPhone = customerPhone || window.prompt("Teléfono")?.trim() || "";
+        customerEmail = customerEmail || window.prompt("Email para Mercado Pago")?.trim().toLowerCase() || "";
+        customerZone = customerZone || window.prompt("Zona / Localidad")?.trim() || "";
+
+        setCustomerData(prev => ({
+          ...prev,
+          name: customerName,
+          phone: customerPhone,
+          email: customerEmail,
+          zone: customerZone,
+        }));
+      }
+    }
+
+    if (!customerName || !customerPhone || !customerEmail || !customerZone) {
+      setShowCheckout(true);
+      alert("Para pagar con Mercado Pago completá nombre, teléfono, email y zona/localidad.");
+      return;
+    }
+
+    const items = [];
+
+    try {
+      for (const item of store.cart) {
+        const price = getItemPrice(item);
+        if (price === null || price <= 0) {
+          throw new Error(`El producto "${item.name}" no tiene precio para pagar con Mercado Pago.`);
+        }
+
+        const productId = item.product_id ?? item.id;
+        if (!productId) {
+          throw new Error(`Falta el ID del producto "${item.name}".`);
+        }
+
+        items.push({
+          id: String(productId),
+          title: getTitle(item),
+          quantity: Math.max(1, parseInt(item.quantity || 1, 10)),
+          unit_price: Number(price),
+          selected_flavor: item.selectedFlavor || null,
+          selected_size_ml: getSelectedMl(item),
+        });
+      }
+    } catch (error) {
+      alert(error.message);
+      return;
+    }
+
+    const [firstName, ...lastNameParts] = customerName.split(/\s+/);
+    const token = localStorage.getItem("token");
+    const headers = {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+
+    setPayingMercadoPago(true);
+    let redirectingToMercadoPago = false;
+
+    try {
+      const reportItems = items.map((item) => ({
+        title: item.title,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        subtotal: item.quantity * item.unit_price,
+        selected_flavor: item.selected_flavor,
+        selected_size_ml: item.selected_size_ml,
+      }));
+
+      localStorage.setItem("customerData", JSON.stringify({
+        ...customerData,
+        email: customerEmail,
+        payment: "Mercado Pago",
+      }));
+      localStorage.setItem("mpOrderReport", JSON.stringify({
+        created_at: new Date().toISOString(),
+        store_name: storeConfig.storeName,
+        payment_method: "Mercado Pago",
+        payment_status: "approved",
+        customer: {
+          name: customerName,
+          phone: customerPhone,
+          email: customerEmail,
+          zone: customerZone,
+        },
+        items: reportItems,
+        subtotal: reportItems.reduce((sum, item) => sum + item.subtotal, 0),
+        total: finalTotal,
+        coupon: couponEnabled && couponTotals ? {
+          code: couponTotals.code,
+          percent: couponTotals.percent,
+          discount: couponTotals.discount,
+        } : null,
+      }));
+
+      const response = await fetch(`${API}/api/mercadopago/create-preference`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          frontend_url: window.location.origin,
+          items,
+          payer: {
+            email: customerEmail,
+            name: firstName || customerName,
+            surname: lastNameParts.join(" "),
+            phone: { area_code: "", number: customerPhone },
+          },
+          form_email: customerEmail,
+          billing_address: {
+            firstName: firstName || customerName,
+            lastName: lastNameParts.join(" "),
+            email: customerEmail,
+            phone: customerPhone,
+            city: customerZone,
+            country: "Argentina",
+          },
+          shipping_address: {
+            mode: "coordinar",
+            label: "A coordinar",
+            city: customerZone,
+            phone: customerPhone,
+            email: customerEmail,
+            firstName: firstName || customerName,
+            lastName: lastNameParts.join(" "),
+            cost: 0,
+          },
+          comment: couponEnabled && couponTotals
+            ? `Cupón aplicado en carrito: ${couponTotals.code} (${couponTotals.percent}% OFF). Total mostrado: ${formatCurrency(finalTotal)}`
+            : "",
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const detail = data?.reason || data?.error || `Error HTTP ${response.status}`;
+        throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+      }
+
+      const isProductionMercadoPago = import.meta.env.VITE_MP_PUBLIC_KEY?.startsWith("APP_USR-");
+      const paymentUrl = isProductionMercadoPago
+        ? data.init_point
+        : data.sandbox_init_point || data.init_point;
+      if (!paymentUrl) {
+        throw new Error("Mercado Pago no devolvió un link de pago.");
+      }
+
+      redirectingToMercadoPago = true;
+      window.location.assign(paymentUrl);
+    } catch (error) {
+      console.error("Error creando preferencia de Mercado Pago:", error);
+      alert(`No se pudo iniciar Mercado Pago: ${error.message}`);
+    } finally {
+      if (!redirectingToMercadoPago) {
+        setPayingMercadoPago(false);
+      }
+    }
+  };
+
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && isOpen && close();
     document.addEventListener("keydown", onKey);
@@ -651,6 +827,24 @@ ${couponEnabled && couponTotals ? `Cupón aplicado: ${couponTotals.code} (${coup
             📦 Solicitar Pedido por WhatsApp
           </button>
 
+          <button
+            onClick={payWithMercadoPago}
+            disabled={payingMercadoPago}
+            className="mt-3 w-full border border-[#009ee3] bg-white text-[#075f8f] py-3 rounded-lg font-serif tracking-wide hover:bg-[#eef9ff] transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {payingMercadoPago ? (
+              <>
+                <span className="h-5 w-5 rounded-full border-2 border-[#009ee3] border-t-transparent animate-spin" aria-hidden="true" />
+                Redirigiendo a Mercado Pago...
+              </>
+            ) : (
+              <>
+                <img src={mercadoPagoLogo} alt="" className="h-6 w-auto" />
+                Pagar con Mercado Pago
+              </>
+            )}
+          </button>
+
 
           <div className="mt-4 text-center">
             {isRouteMode ? (
@@ -740,6 +934,15 @@ ${couponEnabled && couponTotals ? `Cupón aplicado: ${couponTotals.code} (${coup
             />
 
             <input
+              type="email"
+              name="email"
+              placeholder="Email para Mercado Pago"
+              value={customerData.email}
+              onChange={handleCustomerChange}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-3 font-serif tracking-wide focus:outline-none focus:border-gray-900"
+            />
+
+            <input
               type="text"
               name="zone"
               placeholder="Zona / Localidad"
@@ -791,6 +994,19 @@ ${couponEnabled && couponTotals ? `Cupón aplicado: ${couponTotals.code} (${coup
                 className="px-4 py-2 border border-gray-300 rounded-lg font-serif tracking-wide hover:bg-gray-100 transition-colors"
               >
                 Cancelar
+              </button>
+
+              <button
+                onClick={payWithMercadoPago}
+                disabled={payingMercadoPago}
+                className="px-4 py-2 border border-[#009ee3] text-[#075f8f] rounded-lg font-serif tracking-wide hover:bg-[#eef9ff] transition-colors disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+              >
+                {payingMercadoPago ? (
+                  <>
+                    <span className="h-4 w-4 rounded-full border-2 border-[#009ee3] border-t-transparent animate-spin" aria-hidden="true" />
+                    Redirigiendo...
+                  </>
+                ) : "Mercado Pago"}
               </button>
 
               <button

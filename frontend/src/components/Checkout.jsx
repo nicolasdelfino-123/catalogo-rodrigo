@@ -320,6 +320,7 @@ const Checkout = () => {
             // Payload para el backend
             const preferenceData = {
 
+                frontend_url: window.location.origin,
                 items,
                 payer: {
                     email: formEmail,
@@ -390,7 +391,8 @@ const Checkout = () => {
                 let errorData = null
                 try { errorData = JSON.parse(errorText) } catch { errorData = { raw: errorText } }
                 console.error("MP preference error payload:", errorData)
-                const visible = errorData?.reason || errorData?.error || `Error HTTP ${response.status}`
+                const detail = errorData?.reason || errorData?.error || `Error HTTP ${response.status}`
+                const visible = typeof detail === "string" ? detail : JSON.stringify(detail)
                 alert(`Error al crear la preferencia de pago:\n${visible}`)
                 return
             }
