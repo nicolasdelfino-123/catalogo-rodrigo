@@ -14,6 +14,14 @@ export const storeConfig = {
     },
 
     appearance: {
+        site: {
+            backgroundColor: "#ffffff",
+        },
+        page: {
+            // Fondo de InicioNuevo. Dejá backgroundImage en "" para volver al color plano.
+            backgroundColor: "#8a21dbff",
+            backgroundImage: "fondosisisis.png",
+        },
         header: {
             colors: {
                 white: "#ffffff",

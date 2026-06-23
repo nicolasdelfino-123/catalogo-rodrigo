@@ -26,8 +26,8 @@ const footerDeveloperLinkClass = isWhiteFooter ? "hover:text-gray-950" : "hover:
 const Footer = () => {
     const navigate = useNavigate();
     return (
-        <div>
-            <footer className={`${footerTextClass} py-12 font-serif`} style={{ backgroundColor: footerBackgroundColor }}>
+        <div className="relative z-20" style={{ backgroundColor: footerBackgroundColor }}>
+            <footer className={`${footerTextClass} relative z-20 py-12 font-serif`} style={{ backgroundColor: footerBackgroundColor }}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center md:text-left">
                         <div className="flex flex flex-col items-center">

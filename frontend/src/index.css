@@ -27,7 +27,7 @@
 
   color-scheme: light !important;
   color: #111827 !important;
-  background-color: #ffffff !important;
+  background-color: var(--store-page-bg, #ffffff) !important;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -50,6 +50,7 @@ body {
   width: 100%;
   min-width: 320px;
   min-height: 100vh;
+  background-color: var(--store-page-bg, #ffffff);
 }
 
 h1 {
@@ -100,6 +101,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: var(--store-page-bg, #ffffff);
 }
 
 /* Asegurar que el contenido principal ocupe el espacio disponible */
@@ -107,6 +109,18 @@ body {
   width: 100%;
   flex: 1;
   padding: 0;
+  background-color: var(--store-page-bg, #ffffff);
+}
+
+.store-page {
+  min-height: 100vh;
+  background-color: var(--store-page-bg, #ffffff);
+}
+
+.store-page .min-h-screen.bg-gray-50,
+.store-page .min-h-screen.bg-gray-100,
+.store-page .min-h-screen.bg-stone-100 {
+  background-color: var(--store-page-bg, #ffffff) !important;
 }
 
 /* Solo aplicar en pantallas móviles (max-width: 768px) */

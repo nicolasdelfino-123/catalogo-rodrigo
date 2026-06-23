@@ -122,23 +122,29 @@ function HomeBrandCircles({ brands = [], onSelectBrand }) {
     if (!brands.length) return null;
 
     return (
-        <section className="relative overflow-hidden bg-[#f8f5f0] py-8 sm:py-10">
+        <section className="relative overflow-hidden py-8 sm:py-10">
             <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#d8b766] to-transparent" />
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[#ead8a4] to-transparent" />
 
             <div className="mx-auto max-w-7xl">
                 <div className="mb-7 px-4 text-center sm:px-6 lg:px-8">
-                    <span className="block text-[11px] font-semibold uppercase tracking-[0.28em] text-[#9b7b2f]">
+                    <span className="block text-[11px] font-semibold uppercase tracking-[0.28em] text-[#f3d783]">
                         Zahra Perfumes
                     </span>
-                    <h2 className="mt-2 font-serif text-[24px] font-semibold tracking-wide text-[#160d10] sm:text-3xl">
+                    <h2 className="mt-2 font-serif text-[24px] font-semibold tracking-wide text-white sm:text-3xl">
                         Explora nuestra colección
                     </h2>
                 </div>
 
                 <div className="relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-16 bg-gradient-to-r from-[#f8f5f0] via-[#f8f5f0]/80 to-transparent md:block" />
-                    <div className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden w-16 bg-gradient-to-l from-[#f8f5f0] via-[#f8f5f0]/80 to-transparent md:block" />
+                    <div
+                        className="pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-16 md:block"
+                        style={{ background: "linear-gradient(to right, rgba(8, 0, 30, 0.72), transparent)" }}
+                    />
+                    <div
+                        className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden w-16 md:block"
+                        style={{ background: "linear-gradient(to left, rgba(8, 0, 30, 0.72), transparent)" }}
+                    />
 
                     <button
                         type="button"
@@ -181,7 +187,7 @@ function HomeBrandCircles({ brands = [], onSelectBrand }) {
                                             loading="lazy"
                                         />
                                     </span>
-                                    <span className="max-w-full truncate font-serif text-sm font-semibold tracking-wide text-[#2a171b]">
+                                    <span className="max-w-full truncate font-serif text-sm font-semibold tracking-wide text-white">
                                         {brand.label}
                                     </span>
                                 </button>
@@ -436,8 +442,25 @@ export default function InicioNuevo() {
             window.scrollTo({ top: y, behavior: "smooth" });
         }
     }, [location.state]);
+    const pageBackgroundColor = storeConfig.appearance?.page?.backgroundColor || "#ffffff";
+    const pageBackgroundImage = getPublicMediaSrc(storeConfig.appearance?.page?.backgroundImage);
+    const pageBackgroundLayerStyle = pageBackgroundImage
+        ? {
+            backgroundImage: `url(${pageBackgroundImage})`,
+            backgroundPosition: "center center",
+            backgroundRepeat: "no-repeat",
+            backgroundSize: "cover",
+        }
+        : {};
+
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="relative isolate min-h-screen overflow-hidden" style={{ backgroundColor: pageBackgroundColor }}>
+            <div
+                className="pointer-events-none fixed inset-0 z-0"
+                aria-hidden="true"
+                style={pageBackgroundLayerStyle}
+            />
+            <div className="relative z-10">
 
 
             {/* HERO PREMIUM CON IMAGEN CONFIGURABLE DESDE storeConfig */}
@@ -588,7 +611,7 @@ export default function InicioNuevo() {
             {/* PRODUCTOS */}
             <section className="max-w-7xl mx-auto px-2 sm:px-4 pt-12 pb-8 md:pb-10">
                 <div className="text-center mb-10">
-                    <h2 className="text-2xl md:text-3xl font-serif font-semibold tracking-wide">
+                    <h2 className="text-2xl md:text-3xl font-serif font-semibold tracking-wide text-white">
                         Productos Destacados
                     </h2>
 
@@ -839,6 +862,7 @@ shadow-lg shadow-amber-500/20
             )}
 
 
+            </div>
         </div>
     );
 }

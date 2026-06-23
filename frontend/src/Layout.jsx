@@ -88,6 +88,7 @@ const Layout = () => {
   const { store, actions } = useContext(Context);
   const [loading, setLoading] = useState(true);
   const couponEnabled = storeConfig.features?.coupon === true;
+  const siteBackgroundColor = storeConfig.appearance?.site?.backgroundColor || "#ffffff";
 
   // ===============================
   // Inicialización global app
@@ -116,9 +117,21 @@ const Layout = () => {
     init();
   }, [actions]);
 
+  useEffect(() => {
+    document.documentElement.style.setProperty("--store-page-bg", siteBackgroundColor);
+    document.documentElement.style.backgroundColor = siteBackgroundColor;
+    document.body.style.backgroundColor = siteBackgroundColor;
+
+    return () => {
+      document.documentElement.style.removeProperty("--store-page-bg");
+      document.documentElement.style.backgroundColor = "";
+      document.body.style.backgroundColor = "";
+    };
+  }, [siteBackgroundColor]);
+
 
   return (
-    <div>
+    <div className="store-page" style={{ backgroundColor: siteBackgroundColor }}>
       <GlobalSpinner appReady={!loading} />
       <BrowserRouter>
 
