@@ -895,7 +895,11 @@ export default function Header() {
         <Cart isOpen={cartOpen} onClose={() => setCartOpen(false)} />
       </header>
 
-      <div className="block lg:hidden h-[128px]" aria-hidden="true" />
+      <div
+        className="block lg:hidden h-[128px]"
+        style={{ backgroundColor: headerBackgroundColor }}
+        aria-hidden="true"
+      />
     </>
   );
 }
