@@ -37,6 +37,14 @@ ADMIN_HIDDEN_PRODUCT_KEY = "is_active_product"
 BEST_SELLERS_CATEGORY_ID = 999999
 BEST_SELLERS_CATEGORY_NAME = "Más Vendidos"
 
+@admin_bp.after_request
+def add_admin_no_store_headers(response):
+    if request.method == "GET" and request.path.startswith("/admin/"):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
 def _ensure_admin_settings_table():
     db.session.execute(text(f"""
         CREATE TABLE IF NOT EXISTS {ADMIN_SETTINGS_TABLE} (

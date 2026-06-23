@@ -18,8 +18,7 @@ export const getApiUrl = () => {
         const frontendHost = window.location.hostname;
 
         if (isLoopbackHost(apiUrl.hostname) && !isLoopbackHost(frontendHost)) {
-            apiUrl.hostname = frontendHost;
-            return stripTrailingSlash(apiUrl.toString());
+            return "";
         }
     } catch {
         return normalizedUrl;

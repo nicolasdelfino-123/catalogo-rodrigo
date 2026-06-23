@@ -4,6 +4,7 @@ import sinImagen from '@/assets/sin_imagen.jpg'
 import { Link, useNavigate } from "react-router-dom";
 import { formatCurrency, formatPrice, getCurrencySymbol } from "../utils/price.js";
 import { storeConfig } from "../config/storeConfig.js";
+import { getApiUrl } from "../utils/apiUrl.js";
 import AdminBudgetToolbar from "../components/admin/AdminBudgetToolbar.jsx";
 import AdminBudgetSelectionCell from "../components/admin/AdminBudgetSelectionCell.jsx";
 import AdminBudgetModal from "../components/admin/AdminBudgetModal.jsx";
@@ -317,8 +318,43 @@ function FlavorPills({ catalog = [], onChange }) {
 }
 
 // arriba, junto a otros useRef/useState:
-const API = import.meta.env.VITE_BACKEND_URL?.replace(/\/+$/, "") || "";
+const API = getApiUrl();
 const MAX_HOME_FEATURED_PRODUCTS = 12;
+
+const withFreshParam = (url) => {
+    const separator = url.includes("?") ? "&" : "?";
+    return `${url}${separator}_=${Date.now()}`;
+};
+
+const fetchAdminJson = async (url, token, options = {}) => {
+    const res = await fetch(withFreshParam(url), {
+        cache: "no-store",
+        ...options,
+        headers: {
+            Accept: "application/json",
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+            ...(options.headers || {}),
+            Authorization: `Bearer ${token}`,
+        },
+    });
+
+    const contentType = res.headers.get("content-type") || "";
+    const payload = contentType.includes("application/json")
+        ? await res.json().catch(() => null)
+        : await res.text().catch(() => "");
+
+    if (!res.ok) {
+        const message = payload?.error || payload?.message || res.statusText || "No se pudo cargar la información";
+        throw new Error(message);
+    }
+
+    if (!contentType.includes("application/json")) {
+        throw new Error("El servidor no devolvió datos JSON. Revisá la sesión o la URL de producción.");
+    }
+
+    return payload;
+};
 
 // Normaliza paths viejos
 const normalizeImagePath = (u = "") => {
@@ -511,6 +547,8 @@ export default function AdminProducts() {
     const [featuredProductIds, setFeaturedProductIds] = useState([]);
     const [hidingProductId, setHidingProductId] = useState(null);
     const [productToHide, setProductToHide] = useState(null);
+    const [loadingProducts, setLoadingProducts] = useState(false);
+    const [productsError, setProductsError] = useState("");
 
 
 
@@ -541,30 +579,27 @@ export default function AdminProducts() {
     };
 
     const fetchAll = async () => {
+        setLoadingProducts(true);
+        setProductsError("");
         try {
-            const [productsRes, featuredRes] = await Promise.all([
-                fetch(`${API}/admin/products`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                }),
-                fetch(`${API}/admin/home-featured-products`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                }),
+            const [productsData, featuredData] = await Promise.all([
+                fetchAdminJson(`${API}/admin/products`, token),
+                fetchAdminJson(`${API}/admin/home-featured-products`, token),
             ])
 
-            let visibleProductIds = null;
-            if (productsRes.ok) {
-                const data = await productsRes.json()
-                setProducts(data || [])
-                visibleProductIds = new Set((data || []).map((product) => Number(product.id)));
-            }
+            const nextProducts = Array.isArray(productsData) ? productsData : [];
+            const visibleProductIds = new Set(nextProducts.map((product) => Number(product.id)));
+            const ids = (featuredData?.product_ids || []).map(Number);
 
-            if (featuredRes.ok) {
-                const data = await featuredRes.json()
-                const ids = (data?.product_ids || []).map(Number);
-                setFeaturedProductIds(visibleProductIds ? ids.filter((id) => visibleProductIds.has(id)) : ids)
-            }
+            setProducts(nextProducts)
+            setFeaturedProductIds(ids.filter((id) => visibleProductIds.has(id)))
+            return nextProducts;
         } catch (error) {
             console.error("Error fetching products:", error)
+            setProductsError(error?.message || "No se pudieron cargar los productos.");
+            return [];
+        } finally {
+            setLoadingProducts(false);
         }
     }
 
@@ -1703,13 +1738,15 @@ export default function AdminProducts() {
                 >
                     Nuevo
                 </button>
-                {/* <button
+                <button
+                    type="button"
                     onClick={() => fetchAll()}
-                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                    disabled={loadingProducts}
+                    className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60 sm:w-auto"
                     title="Actualizar datos desde el servidor"
                 >
-                    🔄 Refrescar
-                </button> */}
+                    {loadingProducts ? "Actualizando..." : "Actualizar"}
+                </button>
 
                 <Link
                     to="/admin/pedidos"
@@ -1801,6 +1838,26 @@ export default function AdminProducts() {
             )}
 
             <div className="mb-3 space-y-2">
+                {productsError && (
+                    <div className="flex flex-col gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 sm:flex-row sm:items-center sm:justify-between">
+                        <span>{productsError}</span>
+                        <button
+                            type="button"
+                            onClick={() => fetchAll()}
+                            disabled={loadingProducts}
+                            className="rounded bg-red-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-600 disabled:cursor-wait disabled:opacity-60"
+                        >
+                            Reintentar
+                        </button>
+                    </div>
+                )}
+
+                {loadingProducts && products.length === 0 && !productsError && (
+                    <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-950">
+                        Cargando productos...
+                    </div>
+                )}
+
                 {hasActiveFilters && (
                     <div className="flex flex-col gap-2 rounded-lg border border-amber-200 bg-amber-50/60 px-3 py-2 lg:flex-row lg:items-center lg:justify-between">
                         <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
