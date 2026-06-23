@@ -175,24 +175,13 @@ mercadopago_bp = Blueprint('mercadopago', __name__)
 # =========================================================
 def get_mp_creds():
     """
-    DEV/Testing -> usa TEST
-    PROD -> usa PROD
-    Elegimos en base a APP_ENV (o FLASK_ENV si no está APP_ENV).
-    Cambiá APP_ENV=production al desplegar y listo.
+    Usa las credenciales únicas de Mercado Pago configuradas en el .env.
     """
-    env = os.getenv("APP_ENV", os.getenv("FLASK_ENV", "development")).lower()
-
-    if env == "production":
-        # 👇 Claves del CLIENTE en PRODUCCIÓN (configuradas en el servidor)
-        access_token = os.getenv("MP_ACCESS_TOKEN_PROD")   # ej: APP_USR-xxxxxxxxx
-        public_key   = os.getenv("MP_PUBLIC_KEY_PROD")     # ej: APP_USR-xxxxxxxxx
-    else:
-        # 👇 Claves de PRUEBA para desarrollo
-        access_token = os.getenv("MP_ACCESS_TOKEN_TEST")   # ej: TEST-xxxxxxxxx
-        public_key   = os.getenv("MP_PUBLIC_KEY_TEST")     # ej: TEST-xxxxxxxxx
+    access_token = os.getenv("MERCADOPAGO_ACCESS_TOKEN")
+    public_key = os.getenv("MERCADOPAGO_PUBLIC_KEY")
 
     if not access_token:
-        raise RuntimeError("Falta configurar Access Token de MP (MP_ACCESS_TOKEN_*).")
+        raise RuntimeError("Falta configurar MERCADOPAGO_ACCESS_TOKEN.")
 
     return access_token, public_key
 
@@ -256,9 +245,12 @@ def create_preference():
                     "size_ml": it.get("selected_size_ml")
                 })
 
-        frontend_url   = os.getenv('FRONTEND_URL', 'http://localhost:5173').rstrip('/')
+        frontend_url = (
+            os.getenv('MERCADOPAGO_FRONTEND_PUBLIC_URL')
+            or data.get('frontend_url')
+            or os.getenv('FRONTEND_URL', 'http://localhost:5173')
+        ).rstrip('/')
         backend_public = os.getenv('BACKEND_PUBLIC_URL', '').rstrip('/')
-        is_local = ("localhost" in frontend_url) or ("127.0.0.1" in frontend_url)
 
         payer_in = data.get('payer', {}) or {}
         payer_out = {"email": payer_in.get("email")}
@@ -287,6 +279,7 @@ def create_preference():
         comment = (data.get("comment") or "").strip()
         shipping_info = data.get("shipping_address") or {}
         billing_info = data.get("billing_address") or {}
+        store_name = os.getenv("MERCADOPAGO_STORE_NAME", "Zahra Decants").strip() or "Zahra Decants"
 
         # ✅ Guardamos sabores y datos extra en metadata
         preference_data = {
@@ -299,6 +292,7 @@ def create_preference():
                 "form_email": form_email,
                 "name": payer_in.get("name", ""),
                 "surname": payer_in.get("surname", ""),
+                "store_name": store_name,
                 "comment": comment,
                 "shipping_address": shipping_info,
                 "billing_address": billing_info
@@ -307,12 +301,14 @@ def create_preference():
                 "form_email": form_email,
                 "name": payer_in.get("name", ""),
                 "surname": payer_in.get("surname", ""),
+                "store_name": store_name,
                 "flavors": flavors_meta,
                 "sizes_ml": sizes_meta,
                 "comment": comment,
                 "shipping_address": shipping_info,
                 "billing_address": billing_info
             },
+            "statement_descriptor": "ZAHRA DECANTS",
             "back_urls": {
                 "success": f"{frontend_url}/thank-you?status=approved",
                 "failure": f"{frontend_url}/thank-you?status=failure",
@@ -320,9 +316,12 @@ def create_preference():
             }
         }
 
-        if not is_local:
-            preference_data["auto_return"] = "approved"
-        if backend_public:
+        frontend_is_local = ("localhost" in frontend_url) or ("127.0.0.1" in frontend_url)
+        auto_return = os.getenv("MERCADOPAGO_AUTO_RETURN", "").strip()
+        if auto_return and not frontend_is_local:
+            preference_data["auto_return"] = auto_return
+        backend_is_local = ("localhost" in backend_public) or ("127.0.0.1" in backend_public)
+        if backend_public and not backend_is_local:
             preference_data["notification_url"] = f"{backend_public}/api/mercadopago/webhook"
 
         sdk = get_mp_sdk()
@@ -334,7 +333,11 @@ def create_preference():
                 'sandbox_init_point': pref['response'].get('sandbox_init_point')
             }), 201
 
-        return jsonify({'error': 'Error creando preferencia en MercadoPago'}), 400
+        print(f"❌ Error creando preferencia MP: {pref}")
+        return jsonify({
+            'error': 'Error creando preferencia en MercadoPago',
+            'reason': pref.get('response') or pref
+        }), 400
 
     except Exception as e:
         import traceback
@@ -427,6 +430,52 @@ def auto_login_by_payment(payment_id):
     except Exception as e:
         import traceback
         print(f"💥 Error en auto_login: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({'error': str(e)}), 500
+
+
+@mercadopago_bp.route('/sync-payment/<payment_id>', methods=['POST'])
+def sync_payment_order(payment_id):
+    """Crea/asegura la orden de un pago aprobado cuando el webhook no llega."""
+    try:
+        print(f"🔄 Sincronizando orden para payment_id: {payment_id}")
+
+        existing_order = Order.query.filter_by(payment_id=str(payment_id)).first()
+        if existing_order:
+            return jsonify({
+                'status': 'exists',
+                'order_id': existing_order.id,
+                'public_order_number': existing_order.public_order_number,
+            }), 200
+
+        sdk = get_mp_sdk()
+        payment_response = sdk.payment().get(payment_id)
+
+        if payment_response.get("status") != 200:
+            print(f"❌ Pago no encontrado en MP: {payment_response}")
+            return jsonify({'error': 'Pago no encontrado'}), 404
+
+        payment = payment_response.get("response") or {}
+        if payment.get("status") != "approved":
+            return jsonify({
+                'error': 'El pago todavía no está aprobado',
+                'payment_status': payment.get("status"),
+            }), 409
+
+        create_order_from_payment(payment)
+
+        created_order = Order.query.filter_by(payment_id=str(payment_id)).first()
+        if not created_order:
+            return jsonify({'error': 'No se pudo crear la orden'}), 500
+
+        return jsonify({
+            'status': 'created',
+            'order_id': created_order.id,
+            'public_order_number': created_order.public_order_number,
+        }), 201
+
+    except Exception as e:
+        import traceback
+        print(f"💥 Error sincronizando pago: {str(e)}\n{traceback.format_exc()}")
         return jsonify({'error': str(e)}), 500
 
 #ACA EMPIEZO
