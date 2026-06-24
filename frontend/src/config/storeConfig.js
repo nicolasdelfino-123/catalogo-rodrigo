@@ -81,7 +81,7 @@ export const storeConfig = {
             imageMaxWidth: "100%",
             imageHeight: "auto",
             imageMinHeight: "auto",
-            imageMaxHeight: "none",
+            imageMaxHeight: "min(76vh, 640px)",
             imageFit: "contain",
             imagePosition: "center center",
             imageOffsetX: "0px",
