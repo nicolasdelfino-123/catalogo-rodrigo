@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Context } from "../js/store/appContext.jsx";
@@ -258,8 +259,8 @@ function BrandProductsModal({ brand, products = [], onClose, returnTo }) {
 
     if (!brand) return null;
 
-    return (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 px-3 py-4 backdrop-blur-sm sm:px-6">
+    return createPortal((
+        <div className="fixed inset-0 z-[10000] flex items-start justify-center overflow-hidden bg-black/60 px-3 py-[calc(12px+env(safe-area-inset-top,0px))] backdrop-blur-sm sm:items-center sm:px-6 sm:py-4">
             <button
                 type="button"
                 className="absolute inset-0 h-full w-full cursor-default"
@@ -267,8 +268,8 @@ function BrandProductsModal({ brand, products = [], onClose, returnTo }) {
                 onClick={onClose}
             />
 
-            <section className="relative flex max-h-[88vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-[#fbfaf7] shadow-2xl ring-1 ring-white/30">
-                <div className="flex items-start justify-between gap-4 border-b border-[#eadfbd] bg-[#120a0d] px-4 py-4 text-white sm:px-6">
+            <section className="relative flex max-h-[calc(100dvh-24px-env(safe-area-inset-top,0px))] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-[#fbfaf7] shadow-2xl ring-1 ring-white/30 sm:max-h-[88vh]">
+                <div className="flex flex-none items-start justify-between gap-4 border-b border-[#eadfbd] bg-[#120a0d] px-4 py-4 text-white sm:px-6">
                     <div className="min-w-0">
                         <span className="block text-[10px] font-semibold uppercase tracking-[0.28em] text-[#d5b55c]">
                             Comprar por marca
@@ -291,7 +292,7 @@ function BrandProductsModal({ brand, products = [], onClose, returnTo }) {
                     </button>
                 </div>
 
-                <div className="overflow-y-auto px-3 py-5 sm:px-6 sm:py-6">
+                <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-5 sm:px-6 sm:py-6">
                     {products.length > 0 ? (
                         <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
                             {products.map((product) => (
@@ -338,7 +339,7 @@ function BrandProductsModal({ brand, products = [], onClose, returnTo }) {
                 }
             `}</style>
         </div>
-    );
+    ), document.body);
 }
 
 export default function InicioNuevo() {
