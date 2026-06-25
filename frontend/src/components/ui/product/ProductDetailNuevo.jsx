@@ -219,7 +219,7 @@ export default function ProductDetailNuevo() {
 
         const byMl = new Map();
         for (const row of rows) byMl.set(row.ml, row);
-        return Array.from(byMl.values()).sort((a, b) => a.ml - b.ml);
+        return Array.from(byMl.values()).sort((a, b) => b.ml - a.ml);
     }, [product]);
 
     const selectedSize =
