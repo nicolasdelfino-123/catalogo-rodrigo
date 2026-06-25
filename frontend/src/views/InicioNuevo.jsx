@@ -249,10 +249,12 @@ function BrandProductsModal({ brand, products = [], onClose, returnTo }) {
 
         const previousOverflow = document.body.style.overflow;
         document.body.style.overflow = "hidden";
+        document.body.classList.add("home-brand-modal-open");
         window.addEventListener("keydown", handleKeyDown);
 
         return () => {
             document.body.style.overflow = previousOverflow;
+            document.body.classList.remove("home-brand-modal-open");
             window.removeEventListener("keydown", handleKeyDown);
         };
     }, [brand, onClose]);
@@ -260,7 +262,10 @@ function BrandProductsModal({ brand, products = [], onClose, returnTo }) {
     if (!brand) return null;
 
     return createPortal((
-        <div className="fixed inset-0 z-[10000] flex items-start justify-center overflow-hidden bg-black/60 px-3 py-[calc(12px+env(safe-area-inset-top,0px))] backdrop-blur-sm sm:items-center sm:px-6 sm:py-4">
+        <div
+            className="home-brand-modal-overlay fixed inset-0 z-[2147483647] isolate flex items-start justify-center overflow-hidden bg-black/60 px-3 py-[calc(12px+env(safe-area-inset-top,0px))] backdrop-blur-sm sm:items-center sm:px-6 sm:py-4"
+            style={{ zIndex: 2147483647 }}
+        >
             <button
                 type="button"
                 className="absolute inset-0 h-full w-full cursor-default"
@@ -314,6 +319,16 @@ function BrandProductsModal({ brand, products = [], onClose, returnTo }) {
                 </div>
             </section>
             <style>{`
+                .home-brand-modal-overlay {
+                    z-index: 2147483647 !important;
+                    position: fixed !important;
+                    inset: 0 !important;
+                }
+
+                body.home-brand-modal-open header {
+                    z-index: 1 !important;
+                }
+
                 .brand-modal-close {
                     color: #dc2626 !important;
                     background-color: #ffffff !important;
