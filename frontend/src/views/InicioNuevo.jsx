@@ -178,11 +178,11 @@ function HomeBrandCircles({ brands = [], onSelectBrand }) {
                                     className="group flex w-[116px] flex-none snap-center appearance-none flex-col items-center gap-3 border-0 bg-transparent p-0 text-center outline-none sm:w-[132px]"
                                     aria-label={`Ver marca ${brand.label}`}
                                 >
-                                    <span className="relative grid h-[104px] w-[104px] place-items-center rounded-full bg-[conic-gradient(from_140deg,#f5dfa0,#9e7428,#fff7d8,#7c5b22,#f5dfa0)] p-[3px] shadow-[0_18px_42px_rgba(22,13,16,0.16)] transition duration-500 group-hover:-translate-y-1 group-hover:shadow-[0_24px_54px_rgba(22,13,16,0.24)] sm:h-[120px] sm:w-[120px]">
+                                    <span className="relative grid h-[104px] w-[104px] place-items-center rounded-full border border-[#b8b8b8] bg-black p-[3px] shadow-[0_18px_42px_rgba(0,0,0,0.28)] transition duration-500 group-hover:-translate-y-1 group-hover:border-[#d8d8d8] group-hover:shadow-[0_24px_54px_rgba(0,0,0,0.38)] sm:h-[120px] sm:w-[120px]">
                                         <img
                                             src={getPublicMediaSrc(brand.image)}
                                             alt={brand.label}
-                                            className={`mx-auto rounded-full bg-[#fffaf1] object-contain object-center ring-1 ring-white/70 transition duration-500 group-hover:scale-[1.035] ${logoSizeStyle ? "" : `h-full w-full ${logoPaddingClass}`}`}
+                                            className={`home-brand-logo mx-auto rounded-full bg-transparent object-contain object-center transition duration-500 group-hover:scale-[1.035] ${logoSizeStyle ? "" : `h-full w-full ${logoPaddingClass}`}`}
                                             style={logoSizeStyle}
                                             loading="lazy"
                                         />
@@ -228,6 +228,10 @@ function HomeBrandCircles({ brands = [], onSelectBrand }) {
                 .home-brand-arrow-icon {
                     color: #ffffff !important;
                     stroke: #ffffff !important;
+                }
+
+                .home-brand-logo {
+                    filter: grayscale(1) invert(1) contrast(2.35) brightness(1.2);
                 }
             `}</style>
         </section>
