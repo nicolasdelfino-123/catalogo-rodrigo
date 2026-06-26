@@ -171,7 +171,7 @@ function HomeBrandCircles({ brands = [], onSelectBrand }) {
                             const logoPaddingClass = isValentino ? "p-[0px]" : isLattafa ? "p-[8px]" : isMaisonAlhambra ? "p-[2px]" : "p-1";
                             const logoSizePx = Number(brand.logoSizePx);
                             const logoSizeStyle = Number.isFinite(logoSizePx) && logoSizePx > 0
-                                ? { width: `${logoSizePx}px`, height: `${logoSizePx}px` }
+                                ? { width: `${logoSizePx}px`, height: `${logoSizePx}px`, maxWidth: "calc(100% - 10px)", maxHeight: "calc(100% - 10px)" }
                                 : undefined;
 
                             return (
@@ -179,10 +179,10 @@ function HomeBrandCircles({ brands = [], onSelectBrand }) {
                                     key={`${brand.label}-${brand.image}`}
                                     type="button"
                                     onClick={() => onSelectBrand?.(brand)}
-                                    className="group flex w-[116px] flex-none snap-center appearance-none flex-col items-center gap-3 border-0 bg-transparent p-0 text-center outline-none sm:w-[132px]"
+                                    className="home-brand-item group flex w-[116px] flex-none snap-center appearance-none flex-col items-center gap-3 border-0 bg-transparent p-0 text-center outline-none sm:w-[132px]"
                                     aria-label={`Ver marca ${brand.label}`}
                                 >
-                                    <span className="relative grid h-[104px] w-[104px] place-items-center rounded-full border border-[#b8b8b8] bg-black p-[3px] shadow-[0_18px_42px_rgba(0,0,0,0.28)] transition duration-500 group-hover:-translate-y-1 group-hover:border-[#d8d8d8] group-hover:shadow-[0_24px_54px_rgba(0,0,0,0.38)] sm:h-[120px] sm:w-[120px]">
+                                    <span className="home-brand-circle relative grid h-[104px] w-[104px] place-items-center rounded-full border border-[#b8b8b8] bg-black p-[3px] shadow-[0_18px_42px_rgba(0,0,0,0.28)] transition duration-500 group-hover:-translate-y-1 group-hover:border-[#d8d8d8] group-hover:shadow-[0_24px_54px_rgba(0,0,0,0.38)] sm:h-[120px] sm:w-[120px]">
                                         <img
                                             src={getPublicMediaSrc(brand.image)}
                                             alt={brand.label}
@@ -221,6 +221,25 @@ function HomeBrandCircles({ brands = [], onSelectBrand }) {
 
                 .home-brand-scroll::-webkit-scrollbar {
                     display: none;
+                }
+
+                @media (max-width: 639px) {
+                    .home-brand-scroll {
+                        gap: 8px;
+                        padding-left: 12px;
+                        padding-right: 12px;
+                        scroll-padding-left: 12px;
+                        scroll-padding-right: 12px;
+                    }
+
+                    .home-brand-item {
+                        width: calc((100vw - 40px) / 3);
+                    }
+
+                    .home-brand-circle {
+                        width: min(92px, calc((100vw - 40px) / 3));
+                        height: min(92px, calc((100vw - 40px) / 3));
+                    }
                 }
 
                 .home-brand-arrow,
@@ -669,12 +688,12 @@ text-sm
 uppercase
 rounded-lg
 text-white
-bg-[#0B0608] border border-[#C9A227] text-[#C9A227] hover:bg-[#C9A227] hover:text-black
+bg-[#0B0608] border border-[#9ca3af] text-white hover:bg-[#9ca3af] hover:text-black
 bg-[length:200%_100%]
 bg-left
 hover:bg-right
 transition-all duration-500
-shadow-lg shadow-amber-500/20
+shadow-lg shadow-gray-500/20
 "
                 >
                     Explorar todas las categorías
