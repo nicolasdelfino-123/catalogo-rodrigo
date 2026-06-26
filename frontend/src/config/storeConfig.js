@@ -198,10 +198,10 @@ export const storeConfig = {
             { label: "Armaf", brand: "Armaf", image: "c_armaf_logo.png" },
             /* { label: "Bharara", brand: "Bharara", image: "c_bharara.webp" }, */
             { label: "Valentino", brand: "Valentino", aliases: ["Vale"], image: "c_valen_.webp" },
-            { label: "Jean Paul Gaultier", brand: "Jean Paul Gaultier", aliases: ["Gaultier"], image: "c_gaultier.png" },
-            { label: "Kenzo", brand: "Kenzo", image: "c_kenzo.png" },
-            { label: "Montale", brand: "Montale", image: "c_montale.png" },
-            { label: "Lattafa", brand: "Lattafa", aliases: ["Latafa"], image: "c_lat.png" },
+            { label: "Jean Paul Gaultier", brand: "Jean Paul Gaultier", aliases: ["Gaultier"], image: "c_gaultier_sisi.png" },
+            { label: "Kenzo", brand: "Kenzo", image: "c_ken_si.jpeg", logoSizePx: 92 },
+            { label: "Montale", brand: "Montale", image: "c_mon_si.jpeg", logoSizePx: 92 },
+            { label: "Lattafa", brand: "Lattafa", aliases: ["Latafa"], image: "c_latafa.png", logoSizePx: 92 },
             /* { label: "Maison Alhambra", brand: "Maison Alhambra", aliases: ["Maison"], image: "c_mai.png" }, */
         ],
     },

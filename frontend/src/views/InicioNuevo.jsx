@@ -164,6 +164,8 @@ function HomeBrandCircles({ brands = [], onSelectBrand }) {
                         {brands.map((brand) => {
                             const isValentino = normalizeBrandText(brand.label) === "valentino";
                             const isArmaf = normalizeBrandText(brand.label) === "armaf";
+                            const isKenzo = normalizeBrandText(brand.label) === "kenzo";
+                            const isMontale = normalizeBrandText(brand.label) === "montale";
                             const isLattafa = normalizeBrandText(brand.label) === "lattafa";
                             const isMaisonAlhambra = normalizeBrandText(brand.label) === "maison alhambra";
                             const logoPaddingClass = isValentino ? "p-[0px]" : isLattafa ? "p-[8px]" : isMaisonAlhambra ? "p-[2px]" : "p-1";
@@ -184,7 +186,7 @@ function HomeBrandCircles({ brands = [], onSelectBrand }) {
                                         <img
                                             src={getPublicMediaSrc(brand.image)}
                                             alt={brand.label}
-                                            className={`${isArmaf ? "home-brand-logo-original" : "home-brand-logo"} mx-auto rounded-full bg-transparent object-contain object-center transition duration-500 group-hover:scale-[1.035] ${logoSizeStyle ? "" : `h-full w-full ${logoPaddingClass}`}`}
+                                            className={`${isArmaf || isKenzo || isMontale ? "home-brand-logo-original" : "home-brand-logo"} mx-auto rounded-full bg-transparent object-contain object-center transition duration-500 group-hover:scale-[1.035] ${logoSizeStyle ? "" : `h-full w-full ${logoPaddingClass}`}`}
                                             style={logoSizeStyle}
                                             loading="lazy"
                                         />
