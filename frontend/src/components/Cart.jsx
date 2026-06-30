@@ -10,6 +10,10 @@ import mercadoPagoLogo from "../assets/mp-logo1.png";
 
 
 const API = import.meta.env.VITE_BACKEND_URL?.replace(/\/+$/, "") || "";
+const getPublicMediaSrc = (fileName = "") => {
+  if (!fileName) return "";
+  return fileName.startsWith("/") ? fileName : `/${fileName}`;
+};
 
 // --- helpers ---
 const normalizeImagePath = (u = "") => {
@@ -105,6 +109,17 @@ export default function Cart({ isOpen: controlledOpen, onClose: controlledOnClos
   const isRouteMode = controlledOpen === undefined && controlledOnClose === undefined;
   const [internalOpen, setInternalOpen] = useState(true);
   const isOpen = isRouteMode ? internalOpen : !!controlledOpen;
+  const cartBackgroundImage = getPublicMediaSrc(storeConfig.appearance?.page?.backgroundImage || "fondosisisis.png");
+  const cartBackgroundStyle = cartBackgroundImage
+    ? {
+      backgroundImage: `url(${cartBackgroundImage})`,
+      backgroundPosition: "center center",
+      backgroundRepeat: "no-repeat",
+      backgroundSize: "cover",
+    }
+    : {
+      backgroundColor: storeConfig.appearance?.page?.backgroundColor || "#ffffff",
+    };
 
   const close = () => {
     if (isRouteMode) {
@@ -612,9 +627,15 @@ ${couponEnabled && couponTotals ? `Cupón aplicado: ${couponTotals.code} (${coup
   if (!controlledOpen && !isRouteMode && controlledOpen !== false) return null;
 
   const DrawerContent = (
-    <div className="flex h-full flex-col">
+    <div className="relative isolate flex h-full flex-col overflow-hidden">
+      <div
+        className="pointer-events-none absolute inset-0 z-0"
+        aria-hidden="true"
+        style={cartBackgroundStyle}
+      />
+
       {/* Header */}
-      <div className="flex items-start justify-between p-4 sm:p-5 border-b">
+      <div className="relative z-10 flex items-start justify-between border-b border-white/50 p-4 text-white sm:p-5">
         <h2 id="cart-title" className="text-xl sm:text-2xl font-serif tracking-wide">
           Tu selección
         </h2>
@@ -622,16 +643,17 @@ ${couponEnabled && couponTotals ? `Cupón aplicado: ${couponTotals.code} (${coup
           ref={closeBtnRef}
           onClick={close}
           aria-label="Cerrar carrito"
-          className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-black/20 bg-white p-0 text-2xl leading-none text-black shadow-sm transition-colors hover:bg-gray-100 hover:text-black"
+          style={{ backgroundColor: "#ffffff" }}
         >
-          ×
+          <span className="-mt-0.5 leading-none">×</span>
         </button>
       </div>
 
       {/* Items */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3">
+      <div className="relative z-10 flex-1 overflow-y-auto p-4 sm:p-5 space-y-3">
         {!store.cart || store.cart.length === 0 ? (
-          <div className="text-center text-gray-500 py-16">
+          <div className="text-center text-white py-16">
             <p className="text-base sm:text-lg">Tu carrito está vacío</p>
             <button
               onClick={() => (isRouteMode ? navigate("/") : close())}
@@ -650,7 +672,7 @@ ${couponEnabled && couponTotals ? `Cupón aplicado: ${couponTotals.code} (${coup
               const atLimit = Number(item.quantity || 0) >= Number(max || 0);
 
               return (
-                <div key={`${item.id}-${item.selectedFlavor || 'default'}-${getSelectedMl(item) || 'na'}`} className="bg-white border rounded-lg p-3 sm:p-4 shadow-sm">
+                <div key={`${item.id}-${item.selectedFlavor || 'default'}-${getSelectedMl(item) || 'na'}`} className="rounded-lg border border-white/10 bg-black p-3 text-white shadow-sm sm:p-4">
                   <div className="flex gap-3">
                     <img
                       src={toAbsUrl(item?.image_url) || "/sin_imagen.jpg"}
@@ -672,13 +694,13 @@ ${couponEnabled && couponTotals ? `Cupón aplicado: ${couponTotals.code} (${coup
                           <h4 className="font-medium text-sm sm:text-base leading-snug">
                             {getTitle(item)}
                           </h4>
-                          <p className="text-gray-900 font-semibold">
+                          <p className="font-semibold text-white">
                             {getItemPrice(item) !== null
                               ? formatCurrency(getItemPrice(item))
                               : "Consultar"}
                           </p>
                           {getSelectedMl(item) && (
-                            <p className="text-xs text-gray-500 mt-0.5">
+                            <p className="text-xs text-gray-300 mt-0.5">
                               Tamaño: {getSelectedMl(item)}ml
                             </p>
                           )}
@@ -686,7 +708,7 @@ ${couponEnabled && couponTotals ? `Cupón aplicado: ${couponTotals.code} (${coup
                         </div>
                         <button
                           onClick={() => actions.removeFromCart(item.id, item.selectedFlavor, getSelectedMl(item))}
-                          className="text-gray-400 hover:text-gray-600"
+                          className="text-gray-300 hover:text-white"
                           aria-label="Eliminar producto"
                           title="Eliminar"
                         >
@@ -707,11 +729,11 @@ ${couponEnabled && couponTotals ? `Cupón aplicado: ${couponTotals.code} (${coup
                               )
                             }
                             aria-label="Disminuir cantidad"
-                            className="w-9 h-9 rounded bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-lg"
+                            className="w-9 h-9 rounded bg-white text-black hover:bg-gray-200 flex items-center justify-center text-lg"
                           >
                             -
                           </button>
-                          <span className="min-w-[36px] text-center font-medium">
+                          <span className="min-w-[36px] text-center font-medium text-white">
                             {item.quantity}
                           </span>
                           <button
@@ -722,13 +744,13 @@ ${couponEnabled && couponTotals ? `Cupón aplicado: ${couponTotals.code} (${coup
                             aria-label="Aumentar cantidad"
                             disabled={atLimit}
                             title={atLimit ? "Sin stock disponible" : "Aumentar cantidad"}
-                            className={`w-9 h-9 rounded flex items-center justify-center text-lg ${atLimit ? "bg-gray-100 opacity-50 cursor-not-allowed" : "bg-gray-100 hover:bg-gray-200"}`}
+                            className={`w-9 h-9 rounded flex items-center justify-center text-lg text-black ${atLimit ? "bg-white opacity-50 cursor-not-allowed" : "bg-white hover:bg-gray-200"}`}
                           >
                             +
                           </button>
                         </div>
 
-                        <div className="text-right font-semibold">
+                        <div className="text-right font-semibold text-white">
                           {getItemPrice(item) !== null
                             ? formatCurrency(getItemPrice(item) * Number(item.quantity || 0))
                             : "Consultar"}
@@ -744,11 +766,11 @@ ${couponEnabled && couponTotals ? `Cupón aplicado: ${couponTotals.code} (${coup
         )}
 
         {/* Subtotal */}
-        <div className="flex items-center justify-between pt-2">
-          <span className="text-gray-700">
-            Subtotal <span className="text-sm text-gray-400">(sin envío)</span> :
+        <div className="flex items-center justify-between rounded-lg bg-black/35 px-2 py-2 text-white">
+          <span>
+            Subtotal <span className="text-sm text-white/70">(sin envío)</span> :
           </span>
-          <span className="font-semibold">
+          <span className="font-semibold text-white">
             {formatCurrency(total)}
           </span>
         </div>
@@ -806,12 +828,12 @@ ${couponEnabled && couponTotals ? `Cupón aplicado: ${couponTotals.code} (${coup
 
       {/* Footer Totales / Acciones */}
       {store.cart && store.cart.length > 0 && (
-        <div className="border-t p-4 sm:p-5">
+        <div className="relative z-10 border-t border-white/50 bg-black/35 p-4 text-white sm:p-5">
           <div className="flex items-center justify-between mb-4">
             <span className="text-xl font-semibold">Total:</span>
-            <span className="text-2xl font-semibold text-gray-900 font-serif tracking-wide">
+            <span className="text-2xl font-semibold text-white font-serif tracking-wide">
               {couponEnabled && couponTotals && (
-                <span className="block text-sm font-normal text-gray-400 line-through">
+                <span className="block text-sm font-normal text-white/60 line-through">
                   {formatCurrency(Math.round(total))}
                 </span>
               )}
@@ -848,11 +870,15 @@ ${couponEnabled && couponTotals ? `Cupón aplicado: ${couponTotals.code} (${coup
 
           <div className="mt-4 text-center">
             {isRouteMode ? (
-              <Link to="/" className="text-gray-700 font-serif tracking-wide hover:text-gray-900 transition-colors">
+            <Link to="/" className="text-white font-serif tracking-wide hover:text-gray-200 transition-colors">
                 Ver más productos
               </Link>
             ) : (
-              <button onClick={close} className="text-gray-700 font-serif tracking-wide hover:text-gray-900 transition-colors">
+              <button
+                onClick={close}
+                className="bg-transparent border-0 p-0 text-white font-serif tracking-wide hover:bg-transparent hover:text-gray-200 transition-colors"
+                style={{ backgroundColor: "transparent" }}
+              >
                 Ver más productos
               </button>
             )}
@@ -864,8 +890,10 @@ ${couponEnabled && couponTotals ? `Cupón aplicado: ${couponTotals.code} (${coup
 
   if (isRouteMode) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-lg mx-auto">{DrawerContent}</div>
+      <div className="min-h-screen" style={cartBackgroundStyle}>
+        <div className="max-w-lg mx-auto min-h-screen shadow-xl">
+          {DrawerContent}
+        </div>
       </div>
     );
   }
@@ -881,7 +909,7 @@ ${couponEnabled && couponTotals ? `Cupón aplicado: ${couponTotals.code} (${coup
         className={`
           absolute right-0 top-0
           h-screen w-full max-w-md md:max-w-lg
-          bg-white shadow-2xl
+          shadow-2xl
           transform transition-transform duration-500 ease-out
           ${controlledOpen ? "translate-x-0" : "translate-x-full"}
           flex flex-col text-gray-900

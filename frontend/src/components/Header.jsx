@@ -5,7 +5,18 @@ import AccountDropdown from "../components/AccountDropdown.jsx";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { withWholesale } from "../utils/navigation.js";
 import { formatCurrency } from "../utils/price.js";
-import { Search, ShoppingCart } from "lucide-react";
+import {
+  ChevronRight,
+  Grid2X2,
+  LayoutDashboard,
+  LogOut,
+  MessageCircle,
+  PackageSearch,
+  Search,
+  ShoppingCart,
+  UserRound,
+  X,
+} from "lucide-react";
 import { PERFUME_CATEGORY_TREE } from "../utils/perfumeCategories.js";
 import { storeConfig } from "../config/storeConfig.js";
 
@@ -38,11 +49,24 @@ const dropdownLinkClass = isWhiteHeader
   ? "text-gray-900 hover:text-gray-600 hover:bg-gray-50 border-gray-100"
   : "text-gray-300 hover:text-amber-300 hover:bg-[#1a1a1d] border-amber-500/10";
 const mobileMenuSurfaceClass = isWhiteHeader
-  ? "bg-white border-t border-gray-200"
-  : "bg-[#111113] border-t border-amber-500/20";
+  ? "bg-white border border-gray-200"
+  : "bg-[#111113] border border-amber-500/20";
 const mobileMutedClass = isWhiteHeader ? "text-gray-500" : "text-gray-400";
 const mobileDividerClass = isWhiteHeader ? "border-gray-200" : "border-gray-700";
 const mobileNestedBorderClass = isWhiteHeader ? "border-gray-200" : "border-amber-500/30";
+const mobileMenuTitleClass = isWhiteHeader ? "text-gray-950" : "text-white";
+const mobileMenuCardClass = isWhiteHeader
+  ? "bg-gray-50 border-gray-200"
+  : "bg-white/[0.04] border-white/10";
+const mobileMenuActionClass = isWhiteHeader
+  ? "bg-white text-gray-950 border-gray-200 hover:bg-gray-50"
+  : "bg-[#171717] text-gray-100 border-white/10 hover:bg-[#202020]";
+const mobileMenuIconBoxClass = isWhiteHeader
+  ? "bg-gray-100 text-gray-950"
+  : "bg-amber-400/10 text-amber-300";
+const mobileMenuChildLinkClass = isWhiteHeader
+  ? "hover:bg-gray-100 hover:text-gray-950"
+  : "hover:bg-white/[0.06] hover:text-amber-300";
 const mobileSearchSurfaceClass = isWhiteHeader
   ? "border border-gray-300 bg-white"
   : "border border-white/35 bg-[#111113]";
@@ -492,14 +516,14 @@ export default function Header() {
                         {activeProductCategory.children.map((child) => (
                           <Link
                             key={child.route}
-	                            to={withWholesale(child.route)}
-	                            className={`block whitespace-nowrap px-5 py-3 text-[15px] normal-case tracking-normal ${dropdownLinkClass} transition-colors`}
-	                            onClick={() => {
-	                              window.scrollTo({ top: 0, behavior: "smooth" });
-	                              setProductsDropdownOpen(false);
-	                              setActiveProductCategoryRoute("");
-	                            }}
-	                          >
+                            to={withWholesale(child.route)}
+                            className={`block whitespace-nowrap px-5 py-3 text-[15px] normal-case tracking-normal ${dropdownLinkClass} transition-colors`}
+                            onClick={() => {
+                              window.scrollTo({ top: 0, behavior: "smooth" });
+                              setProductsDropdownOpen(false);
+                              setActiveProductCategoryRoute("");
+                            }}
+                          >
                             {child.name}
                           </Link>
                         ))}
@@ -756,81 +780,82 @@ export default function Header() {
           {/* Mobile Menu */}
           {/* Mobile Menu */}
           {isMenuOpen && (
-            <div className="lg:hidden absolute left-0 right-0 top-full z-50">
+            <div className="lg:hidden absolute left-0 right-0 top-full z-50 px-3 pb-4">
+              <div
+                aria-hidden="true"
+                className="fixed inset-x-0 bottom-0 top-[128px] bg-black/35 backdrop-blur-[2px]"
+              />
               <div
                 ref={mobileMenuRef}
-                className={`${mobileMenuSurfaceClass} max-h-[calc(100vh-5rem)] overflow-y-auto overscroll-contain shadow-xl px-4 pt-1 pb-5 space-y-3 font-serif tracking-wide`}
+                className={`${mobileMenuSurfaceClass} relative max-h-[calc(100vh-9rem)] overflow-y-auto overscroll-contain rounded-2xl shadow-2xl px-4 pb-5 pt-4 font-serif tracking-wide`}
               >
-                {/* Botón X dedicado para cerrar */}
-                <div className="flex justify-end -mt-1 -mr-1">
+                <div className="mb-3 flex justify-end">
                   <button
                     onClick={(e) => { e.stopPropagation(); setIsMenuOpen(false); }}
                     aria-label="Cerrar menú"
-                    className={`bg-transparent border-0 p-3 ${headerIconClass} flex items-center justify-center`}
-                    style={{ backgroundColor: 'transparent' }}
+                    className={`flex h-10 w-10 items-center justify-center rounded-full border ${mobileMenuActionClass} p-0 transition-colors`}
                   >
-                    <svg className="w-5 h-5 stroke-[1.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <X className="h-5 w-5 stroke-[1.7]" />
                   </button>
                 </div>
 
-                <Link
-                  to={withWholesale("/inicio")}
-                  className={`block ${headerLinkClass} transition-all duration-300 text-lg`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Inicio
-                </Link>
-
                 {/* Productos en mobile */}
-                <div className="pt-2">
-                  <span className={`block ${mobileMutedClass} text-sm uppercase tracking-wider mb-2`}>
-                    Productos
-                  </span>
+                <div className={`rounded-2xl border ${mobileMenuCardClass} p-3`}>
+                  <div className="mb-3 flex items-center gap-3">
+                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${mobileMenuIconBoxClass}`}>
+                      <PackageSearch className="h-4 w-4 stroke-[1.7]" />
+                    </span>
+                    <div>
+                      <span className={`block ${mobileMutedClass} text-[11px] uppercase tracking-[0.22em]`}>
+                        Zahra Decants
+                      </span>
+                      <p className={`text-base font-semibold tracking-normal ${mobileMenuTitleClass}`}>
 
-                  <div className={`border-l ${mobileNestedBorderClass} pl-4 space-y-2`}>
+                      </p>
+                    </div>
+                  </div>
 
-                    <Link
-                      to={withWholesale("/products")}
-                      className={`block ${headerLinkClass} transition-all duration-300`}
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Ver todos los productos
-                    </Link>
+                  <div className="space-y-2">
 
                     {productCategories.map((category) => {
                       const hasChildren = category.children.length > 0;
                       const expanded = mobileCategoryOpen === category.route;
 
                       return (
-                        <div key={category.route} className={`${hasChildren ? `border-b ${mobileNestedBorderClass} pb-2 last:border-b-0` : ""}`}>
+                        <div key={category.route}>
                           {hasChildren ? (
                             <button
                               type="button"
-                              className={`flex w-full items-center justify-between gap-3 bg-transparent p-0 text-left ${headerLinkClass} transition-colors`}
+                              className={`flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-3 text-left ${mobileMenuActionClass} transition-colors`}
                               onClick={() => setMobileCategoryOpen((current) => current === category.route ? null : category.route)}
                             >
-                              <span>{category.icon} {category.name}</span>
-                              <span className={`block text-lg leading-none transition-transform ${expanded ? "rotate-90" : ""}`}>›</span>
+                              <span className="flex min-w-0 items-center gap-3 text-[15px] font-semibold tracking-normal">
+                                <span className="text-base opacity-80">{category.icon}</span>
+                                <span className="truncate">{category.name}</span>
+                              </span>
+                              <ChevronRight className={`h-4 w-4 shrink-0 stroke-[1.7] opacity-60 transition-transform ${expanded ? "rotate-90" : ""}`} />
                             </button>
                           ) : (
                             <Link
                               to={withWholesale(category.route)}
-                              className={`block ${headerLinkClass} transition-colors`}
+                              className={`flex items-center justify-between rounded-xl border px-3 py-3 ${mobileMenuActionClass} transition-colors`}
                               onClick={() => setIsMenuOpen(false)}
                             >
-                              {category.icon} {category.name}
+                              <span className="flex min-w-0 items-center gap-3 text-[15px] font-semibold tracking-normal">
+                                <span className="text-base opacity-80">{category.icon}</span>
+                                <span className="truncate">{category.name}</span>
+                              </span>
+                              <ChevronRight className="h-4 w-4 shrink-0 stroke-[1.7] opacity-60" />
                             </Link>
                           )}
 
                           {hasChildren && expanded && (
-                            <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 pl-3">
+                            <div className={`mx-1 mt-2 grid grid-cols-1 gap-1 rounded-xl border ${mobileNestedBorderClass} p-2 sm:grid-cols-2`}>
                               {category.children.map((child) => (
                                 <Link
                                   key={child.route}
                                   to={withWholesale(child.route)}
-                                  className={`truncate text-[15px] ${mobileMutedClass} hover:text-amber-300 transition-colors`}
+                                  className={`rounded-lg px-3 py-2 text-[14px] normal-case tracking-normal ${mobileMutedClass} ${mobileMenuChildLinkClass} transition-colors`}
                                   onClick={() => setIsMenuOpen(false)}
                                 >
                                   {child.name}
@@ -842,6 +867,18 @@ export default function Header() {
                       );
                     })}
 
+                    <Link
+                      to={withWholesale("/products")}
+                      className={`flex items-center justify-between rounded-xl border px-3 py-3 ${mobileMenuActionClass} transition-colors`}
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <span className="flex items-center gap-3 text-[15px] font-semibold tracking-normal">
+                        <Grid2X2 className="h-4 w-4 stroke-[1.7]" />
+                        Ver todos los productos
+                      </span>
+                      <ChevronRight className="h-4 w-4 stroke-[1.7] opacity-60" />
+                    </Link>
+
                   </div>
                 </div>
 
@@ -850,19 +887,25 @@ export default function Header() {
                     href={withWholesale("/inicio") + "#asesoria"}
                     onClick={goToContact}
 
-                    className={`block pt-4 mt-3 border-t ${mobileDividerClass} ${headerLinkClass} transition-colors text-lg`}
+                    className={`mt-3 flex items-center gap-3 rounded-xl border px-3 py-3 ${mobileMenuActionClass} transition-colors`}
                   >
-                    Contacto
+                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${mobileMenuIconBoxClass}`}>
+                      <MessageCircle className="h-4 w-4 stroke-[1.7]" />
+                    </span>
+                    <span className="text-base font-semibold tracking-normal">Contacto</span>
                   </a>
                 )}
 
                 {/* Mobile: Ingresar solo si NO hay usuario */}
                 {
                   store.user && (
-                    <div className={`border-t ${mobileDividerClass} pt-2`}>
+                    <div className={`mt-4 border-t ${mobileDividerClass} pt-4`}>
 
-                      <div className={`px-3 py-2 text-sm ${mobileMutedClass}`}>
-                        Hola Administrador
+                      <div className={`mb-2 flex items-center gap-3 px-1 text-sm ${mobileMutedClass}`}>
+                        <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${mobileMenuIconBoxClass}`}>
+                          <UserRound className="h-4 w-4 stroke-[1.7]" />
+                        </span>
+                        <span>Hola Administrador</span>
                       </div>
 
                       <button
@@ -870,9 +913,10 @@ export default function Header() {
                           setIsMenuOpen(false);
                           navigate("/admin/login");
                         }}
-                        className={`block w-full text-left px-3 py-2 ${headerLinkClass} transition-all duration-300`}
+                        className={`mt-2 flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left ${mobileMenuActionClass} transition-colors`}
                       >
-                        Panel Admin
+                        <LayoutDashboard className="h-4 w-4 stroke-[1.7]" />
+                        <span className="text-[15px] font-semibold tracking-normal">Panel Admin</span>
                       </button>
 
                       <button
@@ -880,9 +924,10 @@ export default function Header() {
                           actions.logoutUser();
                           setIsMenuOpen(false);
                         }}
-                        className={`block w-full text-left px-3 py-2 ${headerLinkClass} transition-all duration-300`}
+                        className={`mt-2 flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left ${mobileMenuActionClass} transition-colors`}
                       >
-                        Cerrar sesión
+                        <LogOut className="h-4 w-4 stroke-[1.7]" />
+                        <span className="text-[15px] font-semibold tracking-normal">Cerrar sesión</span>
                       </button>
 
                     </div>
