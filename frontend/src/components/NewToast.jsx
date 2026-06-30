@@ -27,6 +27,9 @@ const toastRoot = document.getElementById("toast-root") || (() => {
     return el;
 })();
 
+toastRoot.style.position = "relative";
+toastRoot.style.zIndex = "1100";
+
 export default function NewToast({ toast, onClose }) {
     const [visible, setVisible] = useState(false);
     const [data, setData] = useState(toast);
@@ -56,7 +59,14 @@ export default function NewToast({ toast, onClose }) {
 
     const openCart = () => {
         if (!hasAction) return;
-        window.dispatchEvent(new CustomEvent("open-cart"));
+        if (document.body.classList.contains("home-brand-modal-open")) {
+            window.dispatchEvent(new CustomEvent("close-home-brand-modal"));
+            window.requestAnimationFrame(() => {
+                window.dispatchEvent(new CustomEvent("open-cart"));
+            });
+        } else {
+            window.dispatchEvent(new CustomEvent("open-cart"));
+        }
         setVisible(false);
         onClose?.();
     };
@@ -81,8 +91,8 @@ export default function NewToast({ toast, onClose }) {
 
     const toastElement = (
         <div
-            className="fixed top-[2cm] right-4 z-[999999] pointer-events-auto animate-slide-in-right transition-all duration-300 ease-out"
-            style={{ fontFamily: "system-ui" }}
+            className="fixed top-[2cm] right-4 z-[1100] pointer-events-auto animate-slide-in-right transition-all duration-300 ease-out"
+            style={{ fontFamily: "system-ui", zIndex: 1100 }}
         >
             <div
                 onClick={openCart}

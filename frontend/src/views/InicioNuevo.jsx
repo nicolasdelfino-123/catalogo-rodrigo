@@ -268,16 +268,19 @@ function BrandProductsModal({ brand, products = [], onClose, returnTo }) {
         const handleKeyDown = (event) => {
             if (event.key === "Escape") onClose();
         };
+        const handleCloseBrandModal = () => onClose();
 
         const previousOverflow = document.body.style.overflow;
         document.body.style.overflow = "hidden";
         document.body.classList.add("home-brand-modal-open");
         window.addEventListener("keydown", handleKeyDown);
+        window.addEventListener("close-home-brand-modal", handleCloseBrandModal);
 
         return () => {
             document.body.style.overflow = previousOverflow;
             document.body.classList.remove("home-brand-modal-open");
             window.removeEventListener("keydown", handleKeyDown);
+            window.removeEventListener("close-home-brand-modal", handleCloseBrandModal);
         };
     }, [brand, onClose]);
 
@@ -285,8 +288,7 @@ function BrandProductsModal({ brand, products = [], onClose, returnTo }) {
 
     return createPortal((
         <div
-            className="home-brand-modal-overlay fixed inset-0 z-[2147483647] isolate flex items-start justify-center overflow-hidden bg-black/60 px-3 py-[calc(12px+env(safe-area-inset-top,0px))] backdrop-blur-sm sm:items-center sm:px-6 sm:py-4"
-            style={{ zIndex: 2147483647 }}
+            className="home-brand-modal-overlay fixed inset-0 z-[1000] isolate flex items-start justify-center overflow-hidden bg-black/60 px-3 py-[calc(12px+env(safe-area-inset-top,0px))] backdrop-blur-sm sm:items-center sm:px-6 sm:py-4"
         >
             <button
                 type="button"
@@ -342,9 +344,15 @@ function BrandProductsModal({ brand, products = [], onClose, returnTo }) {
             </section>
             <style>{`
                 .home-brand-modal-overlay {
-                    z-index: 2147483647 !important;
+                    z-index: 1000 !important;
                     position: fixed !important;
                     inset: 0 !important;
+                }
+
+                body.home-brand-modal-open #toast-root {
+                    position: fixed !important;
+                    z-index: 1100 !important;
+                    pointer-events: none;
                 }
 
                 body.home-brand-modal-open header {
