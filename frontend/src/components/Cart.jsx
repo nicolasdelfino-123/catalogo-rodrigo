@@ -672,7 +672,7 @@ ${couponEnabled && couponTotals ? `Cupón aplicado: ${couponTotals.code} (${coup
               const atLimit = Number(item.quantity || 0) >= Number(max || 0);
 
               return (
-                <div key={`${item.id}-${item.selectedFlavor || 'default'}-${getSelectedMl(item) || 'na'}`} className="rounded-lg border border-white/10 bg-black p-3 text-white shadow-sm sm:p-4">
+                <div key={`${item.id}-${item.selectedFlavor || 'default'}-${getSelectedMl(item) || 'na'}`} className="rounded-lg border border-gray-200 bg-white p-3 text-gray-900 shadow-sm sm:p-4">
                   <div className="flex gap-3">
                     <img
                       src={toAbsUrl(item?.image_url) || "/sin_imagen.jpg"}
@@ -694,13 +694,13 @@ ${couponEnabled && couponTotals ? `Cupón aplicado: ${couponTotals.code} (${coup
                           <h4 className="font-medium text-sm sm:text-base leading-snug">
                             {getTitle(item)}
                           </h4>
-                          <p className="font-semibold text-white">
+                          <p className="font-semibold text-gray-900">
                             {getItemPrice(item) !== null
                               ? formatCurrency(getItemPrice(item))
                               : "Consultar"}
                           </p>
                           {getSelectedMl(item) && (
-                            <p className="text-xs text-gray-300 mt-0.5">
+                            <p className="text-xs text-gray-500 mt-0.5">
                               Tamaño: {getSelectedMl(item)}ml
                             </p>
                           )}
@@ -708,7 +708,7 @@ ${couponEnabled && couponTotals ? `Cupón aplicado: ${couponTotals.code} (${coup
                         </div>
                         <button
                           onClick={() => actions.removeFromCart(item.id, item.selectedFlavor, getSelectedMl(item))}
-                          className="text-gray-300 hover:text-white"
+                          className="text-gray-400 hover:text-gray-700"
                           aria-label="Eliminar producto"
                           title="Eliminar"
                         >
@@ -729,11 +729,11 @@ ${couponEnabled && couponTotals ? `Cupón aplicado: ${couponTotals.code} (${coup
                               )
                             }
                             aria-label="Disminuir cantidad"
-                            className="w-9 h-9 rounded bg-white text-black hover:bg-gray-200 flex items-center justify-center text-lg"
+                            className="w-9 h-9 rounded bg-black text-white hover:bg-gray-800 flex items-center justify-center text-lg"
                           >
                             -
                           </button>
-                          <span className="min-w-[36px] text-center font-medium text-white">
+                          <span className="min-w-[36px] text-center font-medium text-gray-900">
                             {item.quantity}
                           </span>
                           <button
@@ -744,13 +744,13 @@ ${couponEnabled && couponTotals ? `Cupón aplicado: ${couponTotals.code} (${coup
                             aria-label="Aumentar cantidad"
                             disabled={atLimit}
                             title={atLimit ? "Sin stock disponible" : "Aumentar cantidad"}
-                            className={`w-9 h-9 rounded flex items-center justify-center text-lg text-black ${atLimit ? "bg-white opacity-50 cursor-not-allowed" : "bg-white hover:bg-gray-200"}`}
+                            className={`w-9 h-9 rounded flex items-center justify-center text-lg text-white ${atLimit ? "bg-black opacity-50 cursor-not-allowed" : "bg-black hover:bg-gray-800"}`}
                           >
                             +
                           </button>
                         </div>
 
-                        <div className="text-right font-semibold text-white">
+                        <div className="text-right font-semibold text-gray-900">
                           {getItemPrice(item) !== null
                             ? formatCurrency(getItemPrice(item) * Number(item.quantity || 0))
                             : "Consultar"}
